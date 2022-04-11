@@ -2,6 +2,7 @@
     "files.associations": {
         "audiodev_imp.h": "c",
         "audiodev.h": "c",
-        "audiotest.h": "c"
+        "audiotest.h": "c",
+        "iostream": "cpp"
     }
 }

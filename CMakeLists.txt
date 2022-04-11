@@ -52,8 +52,8 @@ set_target_properties(${PROJECT_NAME}
 
 # libpjproject
 pkg_check_modules(PJPROJECT REQUIRED libpjproject)
+target_link_libraries(${PROJECT_NAME} ${PJPROJECT_LIBRARIES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${PJPROJECT_INCLUDE_DIRS})
 target_compile_options(${PROJECT_NAME} PRIVATE ${PJPROJECT_CFLAGS})
-target_link_libraries(${PROJECT_NAME} ${PJPROJECT_LIBRARIES})
 target_link_directories(${PROJECT_NAME} PRIVATE ${PJPROJECT_LIBRARY_DIRS})
 target_link_options(${PROJECT_NAME} PRIVATE ${PJPROJECT_LDFLAGS_OTHER})
