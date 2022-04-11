@@ -23,5 +23,9 @@
 1. configure:
 
    ```bash
-   ./configure --disable-video --enable-ext-sound
+   cd "${PJDIR}"
+   ./configure --enable-shared --disable-static --disable-video --enable-ext-sound
+   make dep && make
+   sudo make install
+   sudo ldconfig
    ```
