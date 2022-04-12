@@ -8,6 +8,7 @@
         "pjmedia_audiodev.h": "c",
         "ostream": "cpp",
         "*.tcc": "cpp",
-        "string_view": "cpp"
+        "string_view": "cpp",
+        "iosfwd": "cpp"
     }
 }

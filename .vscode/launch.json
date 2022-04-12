@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceRoot}/bin/Debug/main",
-            "cwd": "${workspaceRoot}/bin/Debug/"
+            "cwd": "${workspaceRoot}"
         }
     ]
 }

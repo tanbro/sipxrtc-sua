@@ -12,8 +12,12 @@ public:
   virtual void onCallState(pj::OnCallStateParam &);
   virtual void onCallMediaState(pj::OnCallMediaStateParam &);
 
+private:
+  pj_caching_pool cachingPool;
   pj_pool_t *pool;
-  pjmedia_port *record_port;
+  // pjmedia_port *record_port;
+  pj::AudioMediaRecorder *recorder;
+  pj::AudioMediaPlayer *player;
 };
 
 #endif

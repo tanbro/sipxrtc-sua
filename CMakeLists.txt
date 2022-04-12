@@ -12,9 +12,11 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 11)
 
-# if (${CMAKE_COMPILER_IS_GNU_CXX})
-#   add_compile_options(-fsigned-char)
-# endif ()
+option(
+  BUILD_SHARED_PJ
+  "Link to libpjproject's shared/dynamic objects, which requires a configure with `--enable-shared`  and `sudo make install`"
+  OFF
+)
 
 add_compile_options("$<$<CONFIG:DEBUG>:-D_DEBUG>")
 
@@ -24,11 +26,14 @@ find_package(PkgConfig REQUIRED)
 # 项目：这个执行文件
 project(main)
 
+string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME_LOWERCASE)
+string(TOLOWER ${CMAKE_SYSTEM_PROCESSOR} SYSTEM_PROCESSOR_LOWERCASE)
+string(TOLOWER ${CMAKE_CXX_COMPILER_ID} CXX_COMPILER_ID_LOWERCASE)
+
 # source 目录
 set(SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/src)
 # 源文件列表
 set (SOURCES
-  ${SRC_DIR}/trtc_aud_dev.c
   ${SRC_DIR}/main.cxx
   ${SRC_DIR}/myaccount.cxx
   ${SRC_DIR}/mycall.cxx
@@ -51,73 +56,69 @@ set_target_properties(${PROJECT_NAME}
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/bin/${CMAKE_BUILD_TYPE}
 )
 
-# # libpjproject
-# pkg_check_modules(PJPROJECT REQUIRED libpjproject)
-# target_link_libraries(${PROJECT_NAME} ${PJPROJECT_LIBRARIES})
-# target_include_directories(${PROJECT_NAME} PRIVATE ${PJPROJECT_INCLUDE_DIRS})
-# target_compile_options(${PROJECT_NAME} PRIVATE ${PJPROJECT_CFLAGS})
-# target_link_directories(${PROJECT_NAME} PRIVATE ${PJPROJECT_LIBRARY_DIRS})
-# target_link_options(${PROJECT_NAME} PRIVATE ${PJPROJECT_LDFLAGS_OTHER})
+# libpjproject
+if (${BUILD_SHARED_PJ})
+  # 动态链接，需要安装到操作系统，提供 pc
+  pkg_check_modules(PJPROJECT REQUIRED libpjproject)
+  target_link_libraries(${PROJECT_NAME} ${PJPROJECT_LIBRARIES})
+  target_include_directories(${PROJECT_NAME} PRIVATE ${PJPROJECT_INCLUDE_DIRS})
+  target_compile_options(${PROJECT_NAME} PRIVATE ${PJPROJECT_CFLAGS})
+  target_link_directories(${PROJECT_NAME} PRIVATE ${PJPROJECT_LIBRARY_DIRS})
+  target_link_options(${PROJECT_NAME} PRIVATE ${PJPROJECT_LDFLAGS_OTHER})
 
-# libpjproject ， 使用本地 submodules/pjproject 中的静态库
-# 参照其 configure 的 build.mak 文件
-set(PJDIR ${CMAKE_CURRENT_LIST_DIR}/submodules/pjproject)
-set(PJ_TARGET_NAME x86_64-unknown-linux-gnu)
-set(PJ_LIB_SUFFIX ${PJ_TARGET_NAME}.a)
+else ()
+  # libpjproject ， 使用本地 submodules/pjproject 中的静态库
+  # 参照其 configure 的 build.mak 文件
+  set(PJDIR ${CMAKE_CURRENT_LIST_DIR}/submodules/pjproject)
+  # as: export TARGET_NAME := x86_64-unknown-linux-gnu
+  set(PJ_TARGET_NAME ${SYSTEM_PROCESSOR_LOWERCASE}-unknown-${SYSTEM_NAME_LOWERCASE}-${CXX_COMPILER_ID_LOWERCASE})
+  set(PJ_LIB_SUFFIX ${PJ_TARGET_NAME}.a)
 
-set(PJ_CFLAGS
-  -DPJ_AUTOCONF=1
-  -DPJ_IS_BIG_ENDIAN=0
-  -DPJ_IS_LITTLE_ENDIAN=1
-)
+  set(PJ_CFLAGS
+    -DPJ_AUTOCONF=1
+    -DPJ_IS_BIG_ENDIAN=0
+    -DPJ_IS_LITTLE_ENDIAN=1
+  )
 
-set(PJ_INCLUDE_DIRS
-  ${PJDIR}/pjlib/include
-  ${PJDIR}/pjlib-util/include
-  ${PJDIR}/pjnath/include
-  ${PJDIR}/pjmedia/include
-  ${PJDIR}/pjsip/include
-)
+  set(PJ_INCLUDE_DIRS
+    ${PJDIR}/pjlib/include
+    ${PJDIR}/pjlib-util/include
+    ${PJDIR}/pjnath/include
+    ${PJDIR}/pjmedia/include
+    ${PJDIR}/pjsip/include
+  )
 
-set(PJ_LIB_DIRS
-  ${PJDIR}/pjlib/lib
-	${PJDIR}/pjlib-util/lib
-	${PJDIR}/pjnath/lib
-	${PJDIR}/pjmedia/lib
-	${PJDIR}/pjsip/lib
-	${PJDIR}/third_party/lib
-)
+  set(PJ_LIB_FILES
+    ${PJDIR}/pjsip/lib/libpjsua2-${PJ_LIB_SUFFIX}
+    ${PJDIR}/pjsip/lib/libpjsua-${PJ_LIB_SUFFIX}
+    ${PJDIR}/pjsip/lib/libpjsip-ua-${PJ_LIB_SUFFIX}
+    ${PJDIR}/pjsip/lib/libpjsip-simple-${PJ_LIB_SUFFIX}
+    ${PJDIR}/pjsip/lib/libpjsip-${PJ_LIB_SUFFIX}
+    ${PJDIR}/pjmedia/lib/libpjmedia-codec-${PJ_LIB_SUFFIX}
+    ${PJDIR}/pjmedia/lib/libpjmedia-videodev-${PJ_LIB_SUFFIX}
+    ${PJDIR}/pjmedia/lib/libpjmedia-${PJ_LIB_SUFFIX}
+    ${PJDIR}/pjmedia/lib/libpjmedia-audiodev-${PJ_LIB_SUFFIX}
+    ${PJDIR}/pjnath/lib/libpjnath-${PJ_LIB_SUFFIX}
+    ${PJDIR}/pjlib-util/lib/libpjlib-util-${PJ_LIB_SUFFIX}
+    ${PJDIR}/pjlib/lib/libpj-${PJ_LIB_SUFFIX}
+  )
 
-set(PJ_LIB_FILES
-  ${PJDIR}/pjsip/lib/libpjsua2-${PJ_LIB_SUFFIX}
-  ${PJDIR}/pjsip/lib/libpjsua-${PJ_LIB_SUFFIX}
-  ${PJDIR}/pjsip/lib/libpjsip-ua-${PJ_LIB_SUFFIX}
-  ${PJDIR}/pjsip/lib/libpjsip-simple-${PJ_LIB_SUFFIX}
-  ${PJDIR}/pjsip/lib/libpjsip-${PJ_LIB_SUFFIX}
-  ${PJDIR}/pjmedia/lib/libpjmedia-codec-${PJ_LIB_SUFFIX}
-  ${PJDIR}/pjmedia/lib/libpjmedia-videodev-${PJ_LIB_SUFFIX}
-  ${PJDIR}/pjmedia/lib/libpjmedia-${PJ_LIB_SUFFIX}
-  ${PJDIR}/pjmedia/lib/libpjmedia-audiodev-${PJ_LIB_SUFFIX}
-  ${PJDIR}/pjnath/lib/libpjnath-${PJ_LIB_SUFFIX}
-  ${PJDIR}/pjlib-util/lib/libpjlib-util-${PJ_LIB_SUFFIX}
-  ${PJDIR}/pjlib/lib/libpj-${PJ_LIB_SUFFIX}
-)
+  set(PJ_THIRD_PARTY_LIB_FILES
+    ${PJDIR}/third_party/lib/libsrtp-${PJ_LIB_SUFFIX}
+    ${PJDIR}/third_party/lib/libresample-${PJ_LIB_SUFFIX}
+    ${PJDIR}/third_party/lib/libgsmcodec-${PJ_LIB_SUFFIX}
+    ${PJDIR}/third_party/lib/libspeex-${PJ_LIB_SUFFIX}
+    ${PJDIR}/third_party/lib/libilbccodec-${PJ_LIB_SUFFIX}
+    ${PJDIR}/third_party/lib/libg7221codec-${PJ_LIB_SUFFIX}
+    # ${PJDIR}/third_party/lib/libyuv-${PJ_LIB_SUFFIX}
+    # ${PJDIR}/third_party/lib/libwebrtc-${PJ_LIB_SUFFIX}
+    # ${PJDIR}/third_party/lib/libwebrtc-aec3-${PJ_LIB_SUFFIX}
+  )
 
-set(PJ_THIRD_PARTY_LIB_FILES
-  ${PJDIR}/third_party/lib/libsrtp-${PJ_LIB_SUFFIX}
-  ${PJDIR}/third_party/lib/libresample-${PJ_LIB_SUFFIX}
-  ${PJDIR}/third_party/lib/libgsmcodec-${PJ_LIB_SUFFIX}
-  ${PJDIR}/third_party/lib/libspeex-${PJ_LIB_SUFFIX}
-  ${PJDIR}/third_party/lib/libilbccodec-${PJ_LIB_SUFFIX}
-  ${PJDIR}/third_party/lib/libg7221codec-${PJ_LIB_SUFFIX}
-  # ${PJDIR}/third_party/lib/libyuv-${PJ_LIB_SUFFIX}
-  # ${PJDIR}/third_party/lib/libwebrtc-${PJ_LIB_SUFFIX}
-  # ${PJDIR}/third_party/lib/libwebrtc-aec3-${PJ_LIB_SUFFIX}
-)
+  list(APPEND PJ_LIB_FILES ${PJ_THIRD_PARTY_LIB_FILES})
+  list(APPEND PJ_LIB_FILES ssl crypto uuid m rt pthread)
 
-list(APPEND PJ_LIB_FILES ${PJ_THIRD_PARTY_LIB_FILES})
-list(APPEND PJ_LIB_FILES ssl crypto uuid m rt pthread)
-
-target_link_libraries(${PROJECT_NAME} ${PJ_LIB_FILES})
-target_include_directories(${PROJECT_NAME} PRIVATE ${PJ_INCLUDE_DIRS})
-target_compile_options(${PROJECT_NAME} PRIVATE ${PJ_CFLAGS})
+  target_link_libraries(${PROJECT_NAME} ${PJ_LIB_FILES})
+  target_include_directories(${PROJECT_NAME} PRIVATE ${PJ_INCLUDE_DIRS})
+  target_compile_options(${PROJECT_NAME} PRIVATE ${PJ_CFLAGS})
+endif()

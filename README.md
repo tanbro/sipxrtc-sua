@@ -10,23 +10,16 @@
 
 ![media-flow](http://www.pjsip.org/images/media-flow.jpg)
 
-我们如果实习一个自定义虚拟设备，就可以达到上述目的。
+让 PJ 使用“空声音设备”，然后利用录音、放音的 AudioPort 组合达到上述目的。
 
-进而按照 <https://trac.pjsip.org/repos/wiki/External_Sound_Device> 的说明，我们应在构建 `PJPROJECT` 的时候，指定 `--enable-ext-sound` 参数，然后编译和连接自定义设备的实现。
-
-- <https://trac.pjsip.org/repos/wiki/Audio_Dev_API> 说明了自定义设备的要义
-- <https://www.pjsip.org/pjmedia/docs/html/group__audio__device__api.htm> 是相关 API 的定义
+我们可以仿造 `pjmedia/include/wav_port.h`, `pjmedia/src/wav_player.h`, `pjmedia/src/wav_writer.h` 制作一个针对第三方的路放音 AudioPort；仿造 `pjsip/src/pjsua2/media.cpp` 的 `AudioMediaRecorder` 与 `AudioMediaPlayer` 调用上述 Port。
 
 ## PJPROJECT 的构建
 
-由于我们需要使用自定义设备，且只需要音频部分，所以 PJPROJECT 的构建步骤与默认情况稍有不同，我们应:
+configure 的时候，指定 `--disable-sound` 参数让 PJ 使用“空声音设备”。另外，由于只需要音频部分，所以 PJ 的构建步骤与默认情况稍有不同，我们应这样构建:
 
-1. configure:
-
-   ```bash
-   cd "${PJDIR}"
-   ./configure --disable-video --disable-libyuv --disable-sdl --disable-ffmpeg --disable-v4l2 --disable-openh264 --disable-vpx --disable-ipp --disable-libwebrtc --enable-ext-sound
-   make dep && make
-   ```
-
-`--disable-sound` 使用空设备，然后使用 MediaPort 实现？？？
+```bash
+cd submodules/pjproject
+./configure --disable-video --disable-libyuv --disable-sdl --disable-ffmpeg --disable-v4l2 --disable-openh264 --disable-vpx --disable-ipp --disable-libwebrtc --enable-ext-sound
+make dep && make
+```

@@ -29,7 +29,6 @@ int main(int argc, char *argv[]) {
   tcfg.port = 5060;
   try {
     ep.transportCreate(PJSIP_TRANSPORT_UDP, tcfg);
-    // ep.transportCreate(PJSIP_TRANSPORT_UDP6, tcfg);
   } catch (pj::Error &err) {
     std::cout << err.info() << std::endl;
     return 1;

@@ -761,3 +761,5 @@ fabric.properties
 ##############
 /build/
 .cmake/
+[Tt][Mm][Pp]/
+[Tt][Ee][Mm][Pp]/
