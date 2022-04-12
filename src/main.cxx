@@ -25,10 +25,10 @@ int main(int argc, char *argv[]) {
   ep.libInit(ep_cfg);
 
   // Create SIP transport. Error handling sample is shown
-  pj::TransportConfig tcfg;
-  tcfg.port = 5060;
   try {
-    ep.transportCreate(PJSIP_TRANSPORT_UDP, tcfg);
+    pj::TransportConfig cfg;
+    cfg.port = 5060;
+    ep.transportCreate(PJSIP_TRANSPORT_UDP, cfg);
   } catch (pj::Error &err) {
     std::cout << err.info() << std::endl;
     return 1;
@@ -41,7 +41,6 @@ int main(int argc, char *argv[]) {
   std::string line;
 
   MyAccount *acc = nullptr;
-
   {
     // 本地账户
     pj::AccountConfig acfg;
