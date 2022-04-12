@@ -14,7 +14,8 @@
 
 进而按照 <https://trac.pjsip.org/repos/wiki/External_Sound_Device> 的说明，我们应在构建 `PJPROJECT` 的时候，指定 `--enable-ext-sound` 参数，然后编译和连接自定义设备的实现。
 
-<https://trac.pjsip.org/repos/wiki/Audio_Dev_API> 简单说明了自定义设备的接口。
+- <https://trac.pjsip.org/repos/wiki/Audio_Dev_API> 说明了自定义设备的要义
+- <https://www.pjsip.org/pjmedia/docs/html/group__audio__device__api.htm> 是相关 API 的定义
 
 ## PJPROJECT 的构建
 
@@ -24,8 +25,8 @@
 
    ```bash
    cd "${PJDIR}"
-   ./configure --enable-shared --disable-static --disable-video --enable-ext-sound
+   ./configure --disable-video --disable-libyuv --disable-sdl --disable-ffmpeg --disable-v4l2 --disable-openh264 --disable-vpx --disable-ipp --disable-libwebrtc --enable-ext-sound
    make dep && make
-   sudo make install
-   sudo ldconfig
    ```
+
+`--disable-sound` 使用空设备，然后使用 MediaPort 实现？？？

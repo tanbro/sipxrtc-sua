@@ -28,9 +28,10 @@ project(main)
 set(SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/src)
 # 源文件列表
 set (SOURCES
-    ${SRC_DIR}/main.cxx
-    ${SRC_DIR}/myaccount.cxx
-    ${SRC_DIR}/mycall.cxx
+  ${SRC_DIR}/trtc_aud_dev.c
+  ${SRC_DIR}/main.cxx
+  ${SRC_DIR}/myaccount.cxx
+  ${SRC_DIR}/mycall.cxx
 )
 
 # 加构建目标: 可执行
@@ -50,10 +51,73 @@ set_target_properties(${PROJECT_NAME}
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/bin/${CMAKE_BUILD_TYPE}
 )
 
-# libpjproject
-pkg_check_modules(PJPROJECT REQUIRED libpjproject)
-target_link_libraries(${PROJECT_NAME} ${PJPROJECT_LIBRARIES})
-target_include_directories(${PROJECT_NAME} PRIVATE ${PJPROJECT_INCLUDE_DIRS})
-target_compile_options(${PROJECT_NAME} PRIVATE ${PJPROJECT_CFLAGS})
-target_link_directories(${PROJECT_NAME} PRIVATE ${PJPROJECT_LIBRARY_DIRS})
-target_link_options(${PROJECT_NAME} PRIVATE ${PJPROJECT_LDFLAGS_OTHER})
+# # libpjproject
+# pkg_check_modules(PJPROJECT REQUIRED libpjproject)
+# target_link_libraries(${PROJECT_NAME} ${PJPROJECT_LIBRARIES})
+# target_include_directories(${PROJECT_NAME} PRIVATE ${PJPROJECT_INCLUDE_DIRS})
+# target_compile_options(${PROJECT_NAME} PRIVATE ${PJPROJECT_CFLAGS})
+# target_link_directories(${PROJECT_NAME} PRIVATE ${PJPROJECT_LIBRARY_DIRS})
+# target_link_options(${PROJECT_NAME} PRIVATE ${PJPROJECT_LDFLAGS_OTHER})
+
+# libpjproject ， 使用本地 submodules/pjproject 中的静态库
+# 参照其 configure 的 build.mak 文件
+set(PJDIR ${CMAKE_CURRENT_LIST_DIR}/submodules/pjproject)
+set(PJ_TARGET_NAME x86_64-unknown-linux-gnu)
+set(PJ_LIB_SUFFIX ${PJ_TARGET_NAME}.a)
+
+set(PJ_CFLAGS
+  -DPJ_AUTOCONF=1
+  -DPJ_IS_BIG_ENDIAN=0
+  -DPJ_IS_LITTLE_ENDIAN=1
+)
+
+set(PJ_INCLUDE_DIRS
+  ${PJDIR}/pjlib/include
+  ${PJDIR}/pjlib-util/include
+  ${PJDIR}/pjnath/include
+  ${PJDIR}/pjmedia/include
+  ${PJDIR}/pjsip/include
+)
+
+set(PJ_LIB_DIRS
+  ${PJDIR}/pjlib/lib
+	${PJDIR}/pjlib-util/lib
+	${PJDIR}/pjnath/lib
+	${PJDIR}/pjmedia/lib
+	${PJDIR}/pjsip/lib
+	${PJDIR}/third_party/lib
+)
+
+set(PJ_LIB_FILES
+  ${PJDIR}/pjsip/lib/libpjsua2-${PJ_LIB_SUFFIX}
+  ${PJDIR}/pjsip/lib/libpjsua-${PJ_LIB_SUFFIX}
+  ${PJDIR}/pjsip/lib/libpjsip-ua-${PJ_LIB_SUFFIX}
+  ${PJDIR}/pjsip/lib/libpjsip-simple-${PJ_LIB_SUFFIX}
+  ${PJDIR}/pjsip/lib/libpjsip-${PJ_LIB_SUFFIX}
+  ${PJDIR}/pjmedia/lib/libpjmedia-codec-${PJ_LIB_SUFFIX}
+  ${PJDIR}/pjmedia/lib/libpjmedia-videodev-${PJ_LIB_SUFFIX}
+  ${PJDIR}/pjmedia/lib/libpjmedia-${PJ_LIB_SUFFIX}
+  ${PJDIR}/pjmedia/lib/libpjmedia-audiodev-${PJ_LIB_SUFFIX}
+  ${PJDIR}/pjnath/lib/libpjnath-${PJ_LIB_SUFFIX}
+  ${PJDIR}/pjlib-util/lib/libpjlib-util-${PJ_LIB_SUFFIX}
+  ${PJDIR}/pjlib/lib/libpj-${PJ_LIB_SUFFIX}
+)
+
+set(PJ_THIRD_PARTY_LIB_FILES
+  ${PJDIR}/third_party/lib/libsrtp-${PJ_LIB_SUFFIX}
+  ${PJDIR}/third_party/lib/libresample-${PJ_LIB_SUFFIX}
+  ${PJDIR}/third_party/lib/libgsmcodec-${PJ_LIB_SUFFIX}
+  ${PJDIR}/third_party/lib/libspeex-${PJ_LIB_SUFFIX}
+  ${PJDIR}/third_party/lib/libilbccodec-${PJ_LIB_SUFFIX}
+  ${PJDIR}/third_party/lib/libg7221codec-${PJ_LIB_SUFFIX}
+  # ${PJDIR}/third_party/lib/libyuv-${PJ_LIB_SUFFIX}
+  # ${PJDIR}/third_party/lib/libwebrtc-${PJ_LIB_SUFFIX}
+  # ${PJDIR}/third_party/lib/libwebrtc-aec3-${PJ_LIB_SUFFIX}
+)
+
+list(APPEND PJ_LIB_FILES ${PJ_THIRD_PARTY_LIB_FILES})
+list(APPEND PJ_LIB_FILES ssl crypto uuid m rt pthread)
+
+target_link_libraries(${PROJECT_NAME} ${PJ_LIB_FILES})
+target_include_directories(${PROJECT_NAME} PRIVATE ${PJ_INCLUDE_DIRS})
+target_compile_options(${PROJECT_NAME} PRIVATE ${PJ_CFLAGS})

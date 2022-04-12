@@ -3,6 +3,11 @@
         "audiodev_imp.h": "c",
         "audiodev.h": "c",
         "audiotest.h": "c",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "log.h": "c",
+        "pjmedia_audiodev.h": "c",
+        "ostream": "cpp",
+        "*.tcc": "cpp",
+        "string_view": "cpp"
     }
 }

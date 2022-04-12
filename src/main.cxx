@@ -48,62 +48,26 @@ int main(int argc, char *argv[]) {
     pj::AccountConfig acfg;
     acfg.idUri = "sip:0.0.0.0";
     // Create the account
-    MyAccount *acc = new MyAccount;
+    acc = new MyAccount();
     acc->create(acfg, true);
   }
 
-  //
-  std::cout << "按 \"回车\" 键 打印音频设备列表:" << std::endl;
-  std::getline(std::cin, line);
-
+  // 使用空设备
   pj::AudDevManager &aud_dev_mgr = ep.audDevManager();
+  aud_dev_mgr.setNullDev();
+  assert(0 == aud_dev_mgr.getDevCount());
 
-  unsigned i = 0;
-  auto aud_dev_vector = aud_dev_mgr.enumDev2();
-  for (auto it = aud_dev_vector.begin(); it < aud_dev_vector.end(); ++it) {
-    auto di = *it;
-    auto did = aud_dev_mgr.lookupDev(di.driver, di.name);
-    // clang-format off
-    std::cout
-      << "[" << i << "] "
-      << "name: " << di.name << ", "
-      << "driver: " << di.driver << ", "
-      << "inputCount: " << di.inputCount << ", "
-      << "outputCount: " << di.outputCount << ", "
-      << "defaultSamplesPerSec: " << di.defaultSamplesPerSec
-      << std::endl;
-    // clang-format on
-    ++i;
-  }
-  std::cout << "共发现 " << i << " 个音频设备" << std::endl;
-
-  //////////////
-  // 尝试设置:
-
-  std::cout << "输入音频采集设备ID:" << std::endl;
+  std::cout << "输入要呼叫的 SIP URI:" << std::endl;
   std::getline(std::cin, line);
   if (!line.empty()) {
-    auto did = std::stoi(line);
-    aud_dev_mgr.setCaptureDev(did);
+    pj::Call *call = new MyCall(*acc);
+    pj::CallOpParam prm(true); // Use default call settings
+    try {
+      call->makeCall(line, prm);
+    } catch (pj::Error &err) {
+      std::cout << err.info() << std::endl;
+    }
   }
-
-  std::cout << "输入音频播放设备ID:" << std::endl;
-  std::getline(std::cin, line);
-  if (!line.empty()) {
-    auto did = std::stoi(line);
-    aud_dev_mgr.setPlaybackDev(did);
-  }
-
-
-  // std::cout << "输入要呼叫的 SIP URI:" << std::endl;
-  // std::getline(std::cin, line);
-  // pj::Call* call = new MyCall(*acc);
-  // pj::CallOpParam prm(true);  // Use default call settings
-  // try {
-  //   call->makeCall(line, prm);
-  // } catch (pj::Error& err) {
-  //   std::cout << err.info() << std::endl;
-  // }
 
   //////////////
   printf("ctrl-c 退出\n");
