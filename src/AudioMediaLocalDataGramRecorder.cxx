@@ -52,8 +52,8 @@ void AudioMediaLocalDataGramRecorder::createRecorder(
     throw new std::runtime_error(oss.str());
   }
 
-  // 1 秒的缓冲
-  buffer_size = clockRate * channelCount * bitsPerSample / 8;
+  // 0.1 秒的缓冲
+  buffer_size = clockRate * channelCount * bitsPerSample / 8 / 10;
   buffer = (uint8_t *)pj_pool_calloc(pool, buffer_size, sizeof(uint8_t));
 
   PJ_LOG(4, ("AudioMediaLocalDataGramRecorder",
