@@ -8,7 +8,7 @@ endif (POLICY CMP0048)
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
 # 全局语言标准
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 11)
 
@@ -35,8 +35,10 @@ set(SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/src)
 # 源文件列表
 set (SOURCES
   ${SRC_DIR}/main.cxx
+  ${SRC_DIR}/global.cxx
   ${SRC_DIR}/myaccount.cxx
   ${SRC_DIR}/mycall.cxx
+  ${SRC_DIR}/AudioMediaLocalDataGramRecorder.cxx
 )
 
 # 加构建目标: 可执行

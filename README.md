@@ -10,7 +10,9 @@ PJ 的声音管道：
 
 ![media-flow](http://www.pjsip.org/images/media-flow.jpg)
 
-## 第一个思路 - 空设备
+## 音频流的获取与推送
+
+### 第一个思路 - 空设备
 
 让 PJ 使用“空声音设备”，然后利用录音、放音的 AudioPort 组合达到上述目的。
 
@@ -30,7 +32,7 @@ cd submodules/pjproject
 make dep && make
 ```
 
-## 第二个思路 - 自定义设备
+### 第二个思路 - 自定义设备
 
 参照 <https://trac.pjsip.org/repos/wiki/External_Sound_Device> 与 <https://trac.pjsip.org/repos/wiki/Audio_Dev_API#PortedDevices>
 
@@ -41,3 +43,19 @@ cd submodules/pjproject
 ./configure --disable-video --disable-libyuv --disable-sdl --disable-ffmpeg --disable-v4l2 --disable-openh264 --disable-vpx --disable-ipp --disable-libwebrtc --enable-ext-sound
 make dep && make
 ```
+
+## 开发环境
+
+### Develop on Ubuntu 2004 LTS
+
+1. 开发工具
+
+   ```bash
+   sudo apt install build-essential
+   ```
+
+1. 依赖软件开发包
+
+   ```bash
+   sudo apt install libssl-dev uuid-dev
+   ```

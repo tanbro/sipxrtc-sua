@@ -2,7 +2,7 @@
 
 #include <pjsua2.hpp>
 
-inline pj::Endpoint ep;
+extern pj::Endpoint ep;
 
 #define __globalvars_h__
 #endif

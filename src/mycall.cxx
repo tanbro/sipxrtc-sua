@@ -3,12 +3,12 @@
 
 #include <pjmedia/mem_port.h>
 
-#include "globalvars.hxx"
+#include "global.hxx"
 #include "mycall.hxx"
 
 static pj_pool_factory pool_factory;
 
-MyCall::MyCall(pj::Account& acc, int call_id) : Call(acc, call_id) {
+MyCall::MyCall(pj::Account &acc, int call_id) : Call(acc, call_id) {
   pj_caching_pool_init(&cachingPool, NULL, 0);
   pool = pj_pool_create(&cachingPool.factory, "MyCall", 512, 512, NULL);
   // pjmedia_wav_writer_port_create(pool = pool, "rec.wav", 8000, 1, 8000, 16,
@@ -28,7 +28,7 @@ MyCall::~MyCall() {
   pj_caching_pool_destroy(&cachingPool);
 }
 
-void MyCall::onCallState(pj::OnCallStateParam& prm) {
+void MyCall::onCallState(pj::OnCallStateParam &prm) {
   auto ci = getInfo();
   std::cout << ci.remoteUri << "onCallState: " << ci.stateText << std::endl;
 
@@ -41,23 +41,24 @@ void MyCall::onCallState(pj::OnCallStateParam& prm) {
   }
 }
 
-void MyCall::onCallMediaState(pj::OnCallMediaStateParam& prm) {
-  pj::AudDevManager& mgr = ep.audDevManager();
+void MyCall::onCallMediaState(pj::OnCallMediaStateParam &prm) {
+  pj::AudDevManager &mgr = ep.audDevManager();
   auto ci = getInfo();
 
-  auto remote_med = getAudioMedia(-1);  // 收到的来自远端的声音媒体
+  auto remote_med = getAudioMedia(-1); // 收到的来自远端的声音媒体
   auto local_med =
-      ep.audDevManager().getCaptureDevMedia();  // 来自本地采集的声音媒体
+      ep.audDevManager().getCaptureDevMedia(); // 来自本地采集的声音媒体
 
   // Connect the call audio media to sound device
   // remote_med.startTransmit(mgr.getPlaybackDevMedia());
   // local_med.startTransmit(remote_med);
 
   ////////////////////////////////////////////////////////////////////////////////
-  // 很上层的 C++ 接口，只能到文件
-  // 录制: 远端 Audio --> 文件
+  // // 很上层的 C++ 接口，只能到文件
+  // // 录制: 远端 Audio --> 文件
   // std::ostringstream file_name;
-  // file_name << "tmp/rec-" << ci.accId << "-" << ci.callIdString << ci.remoteUri
+  // file_name << "tmp/rec-" << ci.accId << "-" << ci.callIdString <<
+  // ci.remoteUri
   //           << ".wav";
   // if (recorder != nullptr) {
   //   delete recorder;
@@ -73,6 +74,22 @@ void MyCall::onCallMediaState(pj::OnCallMediaStateParam& prm) {
   // player->createPlayer("/home/liuxy/音乐/song-16bit-8k.wav");
   // player->startTransmit(remote_med);
   ////////////////////////////////////////////////////////////////////////////////
+
+  auto remotePortInfo = remote_med.getPortInfo();
+  auto remotePortFmt = remotePortInfo.format;
+  pjsua_conf_port_info remote_port_info;
+  pjsua_conf_get_port_info(remotePortInfo.portId, &remote_port_info);
+
+  if (recorder != nullptr) {
+    delete recorder;
+    recorder = nullptr;
+  }
+  recorder = new AudioMediaLocalDataGramRecorder();
+  recorder->createRecorder("/tmp/sipxrtp-sip.sock", remotePortFmt.clockRate,
+                           remotePortFmt.channelCount,
+                           remote_port_info.samples_per_frame,
+                           remotePortFmt.bitsPerSample);
+  remote_med.startTransmit(*recorder);
 
   ////////////////////////////////////////////////////////////////////////////////
   // // 尝试 mem_port

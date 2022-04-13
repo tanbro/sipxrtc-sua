@@ -7,6 +7,8 @@
 #include <pjmedia.h>
 #include <pjsua2.hpp>
 
+#include "AudioMediaLocalDataGramRecorder.hxx"
+
 class MyCall : public pj::Call {
  public:
   MyCall(pj::Account& acc, int call_id = PJSUA_INVALID_ID);
@@ -20,8 +22,9 @@ class MyCall : public pj::Call {
   pj_pool_t* pool;
   pjmedia_port* record_port;
 
-  pj::AudioMediaRecorder* recorder = nullptr;
   pj::AudioMediaPlayer* player = nullptr;
+
+  AudioMediaLocalDataGramRecorder* recorder = nullptr;
 
   size_t rec_buf_sz = 1024 * 1024;
   void* rec_buf;

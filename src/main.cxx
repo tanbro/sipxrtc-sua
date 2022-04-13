@@ -8,7 +8,7 @@
 #include <iostream>
 #include <pjsua2.hpp>
 
-#include "globalvars.hxx"
+#include "global.hxx"
 #include "myaccount.hxx"
 #include "mycall.hxx"
 
@@ -22,7 +22,17 @@ int main(int argc, char *argv[]) {
   // Initialize endpoint
   pj::EpConfig ep_cfg;
   ep_cfg.logConfig.level = 6;
+  ep_cfg.uaConfig.threadCnt = 4;
+  ep_cfg.medConfig.threadCnt = 4;
   ep.libInit(ep_cfg);
+
+  auto codecs = ep.codecEnum2();
+  std::sort(codecs.begin(), codecs.end(), [](pj::CodecInfo a, pj::CodecInfo b) {
+    return a.priority > b.priority;
+  });
+  for (auto it = codecs.begin(); it < codecs.end(); ++it) {
+    PJ_LOG(3, ("main", "codec[%d] %s", it->priority, it->codecId.c_str()));
+  }
 
   // Create SIP transport. Error handling sample is shown
   try {
@@ -36,7 +46,6 @@ int main(int argc, char *argv[]) {
 
   // Start the library (worker threads etc)
   ep.libStart();
-  std::cout << "*** PJSUA2 STARTED ***" << std::endl;
 
   std::string line;
 
