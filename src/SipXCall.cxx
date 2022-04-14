@@ -76,7 +76,7 @@ void SipXCall::onCallMediaState(pj::OnCallMediaStateParam &prm) {
     recorder = nullptr;
   }
   recorder = new AudioMediaUdsWriter();
-  recorder->createRecorder(this, "/tmp/sipxrtp-sip.sock", 44100, 1, 160, 16000);
+  recorder->createRecorder(this, "/tmp/sipxrtp-sip.sock", 48000, 1, 160, 16);
   remote_med.startTransmit(*recorder);
 
   ////////////////////////////////////////////////////////////////////////////////

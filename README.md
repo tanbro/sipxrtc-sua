@@ -57,5 +57,5 @@ make dep && make
 1. 依赖软件开发包
 
    ```bash
-   sudo apt install libssl-dev uuid-dev
+   sudo apt install libsamplerate0-dev libssl-dev uuid-dev
    ```

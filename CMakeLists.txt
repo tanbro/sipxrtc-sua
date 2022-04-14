@@ -125,4 +125,12 @@ else ()
   target_link_directories(${PROJECT_NAME} PRIVATE ${PJPROJECT_LIBRARY_DIRS})
   target_link_options(${PROJECT_NAME} PRIVATE ${PJPROJECT_LDFLAGS_OTHER})
 
-  endif()
+endif()
+
+# dependency of this project: libsamplerate
+pkg_check_modules(SAMPLERATE REQUIRED samplerate)
+target_link_libraries(${PROJECT_NAME} ${SAMPLERATE_LDFLAGS})
+target_include_directories(${PROJECT_NAME} PRIVATE ${SAMPLERATE_INCLUDE_DIRS})
+target_compile_options(${PROJECT_NAME} PRIVATE ${SAMPLERATE_CFLAGS})
+target_link_directories(${PROJECT_NAME} PRIVATE ${SAMPLERATE_LIBRARY_DIRS})
+target_link_options(${PROJECT_NAME} PRIVATE ${SAMPLERATE_LDFLAGS_OTHER})
