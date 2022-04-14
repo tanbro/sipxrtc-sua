@@ -31,18 +31,21 @@ public:
   /**
    * @brief Create a Recorder object
    *
-   * @param sendtoFile
-   * @param clockRate
-   * @param channelCount
-   * @param samplesPerFrame
-   * @param bitsPerSample
+   * @param call
+   * @param sendto_path
+   * @param clock_rate
+   * @param channel_count
+   * @param samples_per_frame
+   * @param bits_per_sample
+   * @param buffer_msec
    */
-  void createRecorder(const std::string &sendtoFile, unsigned clockRate,
-                      unsigned channelCount, unsigned samplesPerFrame,
-                      unsigned bitsPerSample);
+  void createRecorder(const pj::Call *call, const std::string &sendto_path,
+                      unsigned clock_rate, unsigned channel_count,
+                      unsigned samples_per_frame, unsigned bits_per_sample,
+                      unsigned buffer_msec = 200);
 
 protected:
-  void onBufferFull(pjmedia_port *port);
+  void onFullfill(pjmedia_port *port);
 
 private:
   char *err_buf;
@@ -56,7 +59,7 @@ private:
   uint8_t *buffer;
   size_t buffer_size;
 
-  static void portEofFunc(pjmedia_port *port, void *usr_data);
+  static void cb_mem_capture_eof(pjmedia_port *port, void *usr_data);
 
   pj_caching_pool cachingPool;
   pj_pool_t *pool;

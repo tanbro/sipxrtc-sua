@@ -76,10 +76,7 @@ void SipXCall::onCallMediaState(pj::OnCallMediaStateParam &prm) {
     recorder = nullptr;
   }
   recorder = new AudioMediaUdsWriter();
-  recorder->createRecorder("/tmp/sipxrtp-sip.sock", remotePortFmt.clockRate,
-                           remotePortFmt.channelCount,
-                           remote_port_info.samples_per_frame,
-                           remotePortFmt.bitsPerSample);
+  recorder->createRecorder(this, "/tmp/sipxrtp-sip.sock", 44100, 1, 160, 16000);
   remote_med.startTransmit(*recorder);
 
   ////////////////////////////////////////////////////////////////////////////////
@@ -103,4 +100,4 @@ void SipXCall::onCallMediaState(pj::OnCallMediaStateParam &prm) {
   // pjsua_conf_connect(remote_med.getPortInfo().portId, rec_port_id);
 }
 
-}
+} // namespace sipxsua
