@@ -13,9 +13,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 11)
 
 option(
-  BUILD_SHARED_PJ
+  WITH_PJ_STATIC
   "Link to libpjproject's shared/dynamic objects, which requires a configure with `--enable-shared`  and `sudo make install`"
-  OFF
+  TRUE
 )
 
 add_compile_options("$<$<CONFIG:DEBUG>:-D_DEBUG>")
@@ -24,7 +24,7 @@ add_compile_options("$<$<CONFIG:DEBUG>:-D_DEBUG>")
 find_package(PkgConfig REQUIRED)
 
 # 项目：这个执行文件
-project(main)
+project(sipxsua)
 
 string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME_LOWERCASE)
 string(TOLOWER ${CMAKE_SYSTEM_PROCESSOR} SYSTEM_PROCESSOR_LOWERCASE)
@@ -36,9 +36,9 @@ set(SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/src)
 set (SOURCES
   ${SRC_DIR}/main.cxx
   ${SRC_DIR}/global.cxx
-  ${SRC_DIR}/myaccount.cxx
-  ${SRC_DIR}/mycall.cxx
-  ${SRC_DIR}/AudioMediaLocalDataGramRecorder.cxx
+  ${SRC_DIR}/SipXAccount.cxx
+  ${SRC_DIR}/SipXCall.cxx
+  ${SRC_DIR}/AudioMediaUdsWriter.cxx
 )
 
 # 加构建目标: 可执行
@@ -55,20 +55,11 @@ set_target_properties(${PROJECT_NAME}
     PROPERTIES
     BUILD_RPATH lib
     # 输出目录
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/bin/${CMAKE_BUILD_TYPE}
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/out/${CMAKE_BUILD_TYPE}/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_CXX_COMPILER_ID}/bin
 )
 
 # libpjproject
-if (${BUILD_SHARED_PJ})
-  # 动态链接，需要安装到操作系统，提供 pc
-  pkg_check_modules(PJPROJECT REQUIRED libpjproject)
-  target_link_libraries(${PROJECT_NAME} ${PJPROJECT_LIBRARIES})
-  target_include_directories(${PROJECT_NAME} PRIVATE ${PJPROJECT_INCLUDE_DIRS})
-  target_compile_options(${PROJECT_NAME} PRIVATE ${PJPROJECT_CFLAGS})
-  target_link_directories(${PROJECT_NAME} PRIVATE ${PJPROJECT_LIBRARY_DIRS})
-  target_link_options(${PROJECT_NAME} PRIVATE ${PJPROJECT_LDFLAGS_OTHER})
-
-else ()
+if (${WITH_PJ_STATIC})
   # libpjproject ， 使用本地 submodules/pjproject 中的静态库
   # 参照其 configure 的 build.mak 文件
   set(PJDIR ${CMAKE_CURRENT_LIST_DIR}/submodules/pjproject)
@@ -123,4 +114,15 @@ else ()
   target_link_libraries(${PROJECT_NAME} ${PJ_LIB_FILES})
   target_include_directories(${PROJECT_NAME} PRIVATE ${PJ_INCLUDE_DIRS})
   target_compile_options(${PROJECT_NAME} PRIVATE ${PJ_CFLAGS})
-endif()
+
+else ()
+
+  # 动态链接，需要安装到操作系统，提供 pc
+  pkg_check_modules(PJPROJECT REQUIRED libpjproject)
+  target_link_libraries(${PROJECT_NAME} ${PJPROJECT_LIBRARIES})
+  target_include_directories(${PROJECT_NAME} PRIVATE ${PJPROJECT_INCLUDE_DIRS})
+  target_compile_options(${PROJECT_NAME} PRIVATE ${PJPROJECT_CFLAGS})
+  target_link_directories(${PROJECT_NAME} PRIVATE ${PJPROJECT_LIBRARY_DIRS})
+  target_link_options(${PROJECT_NAME} PRIVATE ${PJPROJECT_LDFLAGS_OTHER})
+
+  endif()

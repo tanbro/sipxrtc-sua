@@ -1,5 +1,5 @@
-#ifndef __audio_media_recorder_hxx__
-#define __audio_media_recorder_hxx__
+#ifndef __AudioMediaUdsWriter__
+#define __AudioMediaUdsWriter__
 
 #include <stdint.h>
 
@@ -9,22 +9,24 @@
 #include <pjmedia.h>
 #include <pjsua2.hpp>
 
+namespace sipxsua {
+
 /**
- * Audio Media Recorder.
+ * Audio Media Recorder, send recoreded data to Unix Socket.
  */
-class AudioMediaLocalDataGramRecorder : public pj::AudioMedia {
+class AudioMediaUdsWriter : public pj::AudioMedia {
 public:
   /**
    * @brief Construct a new Audio Media Unix Dgram Recorder object
    *
    */
-  AudioMediaLocalDataGramRecorder();
+  AudioMediaUdsWriter();
 
   /**
    * @brief Destroy the Audio Media Unix Dgram Recorder object
    *
    */
-  ~AudioMediaLocalDataGramRecorder();
+  ~AudioMediaUdsWriter();
 
   /**
    * @brief Create a Recorder object
@@ -46,7 +48,7 @@ private:
   char *err_buf;
   size_t err_sz = PJ_LOG_MAX_SIZE;
 
-  int sockfd;
+  int sockfd = -1;
   sockaddr_un *sendto_addr;
 
   pjmedia_port *port;
@@ -59,5 +61,7 @@ private:
   pj_caching_pool cachingPool;
   pj_pool_t *pool;
 };
+
+} // namespace sipxsua
 
 #endif

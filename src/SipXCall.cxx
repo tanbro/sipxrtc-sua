@@ -3,45 +3,36 @@
 
 #include <pjmedia/mem_port.h>
 
+#include "SipXCall.hxx"
 #include "global.hxx"
-#include "mycall.hxx"
+
+namespace sipxsua {
 
 static pj_pool_factory pool_factory;
 
-MyCall::MyCall(pj::Account &acc, int call_id) : Call(acc, call_id) {
+SipXCall::SipXCall(pj::Account &acc, int call_id) : Call(acc, call_id) {
   pj_caching_pool_init(&cachingPool, NULL, 0);
-  pool = pj_pool_create(&cachingPool.factory, "MyCall", 512, 512, NULL);
-  // pjmedia_wav_writer_port_create(pool = pool, "rec.wav", 8000, 1, 8000, 16,
-  //                                PJMEDIA_FILE_WRITE_PCM, -1, &record_port);
-
-  rec_buf = pj_pool_calloc(pool, rec_buf_sz, sizeof(char));
+  pool = pj_pool_create(&cachingPool.factory, "SipXCall", 512, 512, NULL);
 }
 
-MyCall::~MyCall() {
+SipXCall::~SipXCall() {
   if (recorder != nullptr) {
     delete recorder;
-  }
-  if (player != nullptr) {
-    delete player;
   }
   pj_pool_release(pool);
   pj_caching_pool_destroy(&cachingPool);
 }
 
-void MyCall::onCallState(pj::OnCallStateParam &prm) {
+void SipXCall::onCallState(pj::OnCallStateParam &prm) {
   auto ci = getInfo();
   std::cout << ci.remoteUri << "onCallState: " << ci.stateText << std::endl;
 
   if (ci.state == PJSIP_INV_STATE_DISCONNECTED) {
-    auto fp = std::fopen("tmp/memrec.data", "wb");
-    std::fwrite(rec_buf, sizeof(char), rec_buf_sz, fp);
-    std::fclose(fp);
-
     /// TODO: Schedule/Dispatch call deletion to another thread here
   }
 }
 
-void MyCall::onCallMediaState(pj::OnCallMediaStateParam &prm) {
+void SipXCall::onCallMediaState(pj::OnCallMediaStateParam &prm) {
   pj::AudDevManager &mgr = ep.audDevManager();
   auto ci = getInfo();
 
@@ -84,7 +75,7 @@ void MyCall::onCallMediaState(pj::OnCallMediaStateParam &prm) {
     delete recorder;
     recorder = nullptr;
   }
-  recorder = new AudioMediaLocalDataGramRecorder();
+  recorder = new AudioMediaUdsWriter();
   recorder->createRecorder("/tmp/sipxrtp-sip.sock", remotePortFmt.clockRate,
                            remotePortFmt.channelCount,
                            remote_port_info.samples_per_frame,
@@ -110,4 +101,6 @@ void MyCall::onCallMediaState(pj::OnCallMediaStateParam &prm) {
   // pjsua_conf_add_port(pool, port, &rec_port_id);
   // assert(rec_port_id != PJSUA_INVALID_ID);
   // pjsua_conf_connect(remote_med.getPortInfo().portId, rec_port_id);
+}
+
 }

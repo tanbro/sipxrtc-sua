@@ -1,4 +1,4 @@
-#include "AudioMediaLocalDataGramRecorder.hxx"
+#include "AudioMediaUdsWriter.hxx"
 
 #include <errno.h>
 #include <error.h>
@@ -11,16 +11,17 @@
 #include <sstream>
 #include <stdexcept>
 
-AudioMediaLocalDataGramRecorder::AudioMediaLocalDataGramRecorder()
-    : pj::AudioMedia() {
+namespace sipxsua {
+
+AudioMediaUdsWriter::AudioMediaUdsWriter() : pj::AudioMedia() {
   id == PJSUA_INVALID_ID;
   pj_caching_pool_init(&cachingPool, NULL, 0);
-  pool = pj_pool_create(&cachingPool.factory, "AudioMediaLocalDataGramRecorder",
-                        8192, 8192, NULL);
+  pool = pj_pool_create(&cachingPool.factory, "AudioMediaUdsWriter", 8192, 8192,
+                        NULL);
   err_buf = (char *)pj_pool_calloc(pool, err_sz, sizeof(char));
 }
 
-AudioMediaLocalDataGramRecorder::~AudioMediaLocalDataGramRecorder() {
+AudioMediaUdsWriter::~AudioMediaUdsWriter() {
   if (id != PJSUA_INVALID_ID) {
     unregisterMediaPort();
   }
@@ -31,9 +32,11 @@ AudioMediaLocalDataGramRecorder::~AudioMediaLocalDataGramRecorder() {
   pj_caching_pool_destroy(&cachingPool);
 }
 
-void AudioMediaLocalDataGramRecorder::createRecorder(
-    const std::string &sendtoFile, unsigned clockRate, unsigned channelCount,
-    unsigned samplesPerFrame, unsigned bitsPerSample) {
+void AudioMediaUdsWriter::createRecorder(const std::string &sendtoFile,
+                                         unsigned clockRate,
+                                         unsigned channelCount,
+                                         unsigned samplesPerFrame,
+                                         unsigned bitsPerSample) {
   if (id != PJSUA_INVALID_ID) {
     /// TODO: 不允许重复创建！！！
     throw new std::runtime_error("Duplicate invoking on createRecorder");
@@ -56,7 +59,7 @@ void AudioMediaLocalDataGramRecorder::createRecorder(
   buffer_size = clockRate * channelCount * bitsPerSample / 8 / 10;
   buffer = (uint8_t *)pj_pool_calloc(pool, buffer_size, sizeof(uint8_t));
 
-  PJ_LOG(4, ("AudioMediaLocalDataGramRecorder",
+  PJ_LOG(4, ("AudioMediaUdsWriter",
              "createRecorder: bufferSize=%d, clockRate=%d, channelCount=%d, "
              "samplesPerFrame=%d,bitsPerSample=%d",
              buffer_size, clockRate, channelCount, samplesPerFrame,
@@ -74,19 +77,17 @@ void AudioMediaLocalDataGramRecorder::createRecorder(
     std::cerr << oss.str() << std::endl;
     throw new std::runtime_error(oss.str());
   } else {
-    PJ_LOG(4, ("AudioMediaLocalDataGramRecorder",
-               "createRecorder: conf_port_id=%d", id));
+    PJ_LOG(4, ("AudioMediaUdsWriter", "createRecorder: conf_port_id=%d", id));
   }
 
   pjmedia_mem_capture_set_eof_cb2(port, (void *)this, portEofFunc);
 }
 
-void AudioMediaLocalDataGramRecorder::portEofFunc(pjmedia_port *port,
-                                                  void *usr_data) {
-  ((AudioMediaLocalDataGramRecorder *)usr_data)->onBufferFull(port);
+void AudioMediaUdsWriter::portEofFunc(pjmedia_port *port, void *usr_data) {
+  ((AudioMediaUdsWriter *)usr_data)->onBufferFull(port);
 }
 
-void AudioMediaLocalDataGramRecorder::onBufferFull(pjmedia_port *port) {
+void AudioMediaUdsWriter::onBufferFull(pjmedia_port *port) {
   ssize_t n = sendto(sockfd, buffer, buffer_size, 0,
                      (struct sockaddr *)sendto_addr, sizeof(*sendto_addr));
   if (n < 0) {
@@ -94,11 +95,13 @@ void AudioMediaLocalDataGramRecorder::onBufferFull(pjmedia_port *port) {
     case ENOENT:
       break;
     default: {
-      PJ_LOG(2, ("AudioMediaLocalDataGramRecorder",
-                 "Unix Socket DATAGRAM send error (%d): %s", errno,
-                 strerror(errno)));
+      PJ_LOG(2,
+             ("AudioMediaUdsWriter", "Unix Socket DATAGRAM send error (%d): %s",
+              errno, strerror(errno)));
     } break;
     }
   }
   memset(buffer, 0, buffer_size);
 }
+
+} // namespace sipxsua

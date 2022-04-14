@@ -8,9 +8,11 @@
 #include <iostream>
 #include <pjsua2.hpp>
 
+#include "SipXAccount.hxx"
+#include "SipXCall.hxx"
 #include "global.hxx"
-#include "myaccount.hxx"
-#include "mycall.hxx"
+
+using namespace sipxsua;
 
 static bool running = true;
 
@@ -49,13 +51,13 @@ int main(int argc, char *argv[]) {
 
   std::string line;
 
-  MyAccount *acc = nullptr;
+  SipXAccount *acc = nullptr;
   {
     // 本地账户
     pj::AccountConfig acfg;
     acfg.idUri = "sip:0.0.0.0";
     // Create the account
-    acc = new MyAccount();
+    acc = new SipXAccount();
     acc->create(acfg, true);
   }
 
@@ -67,7 +69,7 @@ int main(int argc, char *argv[]) {
   std::cout << "输入要呼叫的 SIP URI:" << std::endl;
   std::getline(std::cin, line);
   if (!line.empty()) {
-    pj::Call *call = new MyCall(*acc);
+    pj::Call *call = new SipXCall(*acc);
     pj::CallOpParam prm(true); // Use default call settings
     try {
       call->makeCall(line, prm);
