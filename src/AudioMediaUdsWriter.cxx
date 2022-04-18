@@ -62,9 +62,6 @@ void AudioMediaUdsWriter::createRecorder(
                                    audioFormat.channelCount *
                                    audioFormat.frameTimeUsec / 1000000;
 
-  PJ_LOG(3,
-         ("AudioMediaUdsWriter", "samples_per_frame: %u", samples_per_frame));
-
   //分配缓冲区
   buffer = (uint8_t *)pj_pool_calloc(pool, buffer_size, sizeof(uint8_t));
 
@@ -113,7 +110,7 @@ void AudioMediaUdsWriter::createRecorder(
         (short *)pj_pool_calloc(pool, src_data.output_frames, sizeof(short));
   }
 
-  // 建立内存捕获 Audio Port
+  // 建立内存采集 Audio Port
   pjmedia_mem_capture_create(pool, buffer, buffer_size, audioFormat.clockRate,
                              audioFormat.channelCount, samples_per_frame,
                              audioFormat.bitsPerSample, 0, &port);
@@ -124,12 +121,7 @@ void AudioMediaUdsWriter::createRecorder(
   pjmedia_mem_capture_set_eof_cb2(port, (void *)this, cb_mem_capture_eof);
 }
 
-void AudioMediaUdsWriter::cb_mem_capture_eof(pjmedia_port *port,
-                                             void *usr_data) {
-  ((AudioMediaUdsWriter *)usr_data)->onFullfill(port);
-}
-
-void AudioMediaUdsWriter::onFullfill(pjmedia_port *port) {
+void AudioMediaUdsWriter::onBufferEof() {
   // 如果不用 resample，缓冲的数据可以直接发送
   uint8_t *send_buf = buffer;
   size_t send_sz = buffer_size;
@@ -187,6 +179,11 @@ void AudioMediaUdsWriter::onFullfill(pjmedia_port *port) {
     } break;
     }
   }
+}
+
+void AudioMediaUdsWriter::cb_mem_capture_eof(pjmedia_port *port,
+                                             void *usr_data) {
+  ((AudioMediaUdsWriter *)usr_data)->onBufferEof();
 }
 
 } // namespace sipxsua

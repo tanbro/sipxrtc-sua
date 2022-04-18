@@ -18,21 +18,10 @@ namespace sipxsua {
  */
 class AudioMediaUdsWriter : public pj::AudioMedia {
 public:
-  /**
-   * @brief Construct a new Audio Media Unix Dgram Recorder object
-   *
-   */
   AudioMediaUdsWriter();
 
-  /**
-   * @brief Destroy the Audio Media Unix Dgram Recorder object
-   *
-   */
   ~AudioMediaUdsWriter();
 
-  /**
-   * @brief Create a Recorder object
-   */
   void createRecorder(const pj::MediaFormatAudio &audioFormat,
                       const std::string &sendtoPath, unsigned sampleRate,
                       unsigned bufferMSec = 100);
@@ -46,7 +35,7 @@ protected:
    * @brief 目标音频采样率
    */
   unsigned sampleRate;
-  void onFullfill(pjmedia_port *port);
+  void onBufferEof();
 
 private:
   int sockfd = -1;

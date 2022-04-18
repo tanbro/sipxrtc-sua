@@ -39,6 +39,7 @@ set (SOURCES
   ${SRC_DIR}/SipXAccount.cxx
   ${SRC_DIR}/SipXCall.cxx
   ${SRC_DIR}/AudioMediaUdsWriter.cxx
+  ${SRC_DIR}/AudioMediaUdsReader.cxx
 )
 
 # 加构建目标: 可执行
@@ -62,8 +63,13 @@ set_target_properties(${PROJECT_NAME}
 # libpjproject
 if (${WITH_PJ_STATIC})
   # libpjproject ， 使用本地 submodules/pjproject 中的静态库
+  if (DEFINED ENV{PJDIR})
+    set(PJDIR $ENV{PJDIR})
+  else ()
+    set(PJDIR ${CMAKE_CURRENT_LIST_DIR}/submodules/pjproject)
+  endif ()
+
   # 参照其 configure 的 build.mak 文件
-  set(PJDIR ${CMAKE_CURRENT_LIST_DIR}/submodules/pjproject)
   # as: export TARGET_NAME := x86_64-unknown-linux-gnu
   set(PJ_TARGET_NAME ${SYSTEM_PROCESSOR_LOWERCASE}-unknown-${SYSTEM_NAME_LOWERCASE}-${CXX_COMPILER_ID_LOWERCASE})
   set(PJ_LIB_SUFFIX ${PJ_TARGET_NAME}.a)
