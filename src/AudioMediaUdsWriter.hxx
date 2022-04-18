@@ -1,5 +1,5 @@
-#ifndef __AudioMediaUdsWriter__
-#define __AudioMediaUdsWriter__
+#ifndef __sipxsua_AudioMediaUdsWriter__
+#define __sipxsua_AudioMediaUdsWriter__
 
 #include <stdint.h>
 

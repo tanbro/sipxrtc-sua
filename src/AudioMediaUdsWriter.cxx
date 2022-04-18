@@ -81,7 +81,6 @@ void AudioMediaUdsWriter::createRecorder(
 
   // 新建 resampler
   if (sampleRate != audioFormat.clockRate) {
-
     int src_err = 0;
     src_state =
         src_new(SRC_SINC_MEDIUM_QUALITY, audioFormat.channelCount, &src_err);
@@ -111,17 +110,21 @@ void AudioMediaUdsWriter::createRecorder(
   }
 
   // 建立内存采集 Audio Port
-  pjmedia_mem_capture_create(pool, buffer, buffer_size, audioFormat.clockRate,
-                             audioFormat.channelCount, samples_per_frame,
-                             audioFormat.bitsPerSample, 0, &port);
+  PJSUA2_CHECK_EXPR(pjmedia_mem_capture_create(
+      pool, buffer, buffer_size, audioFormat.clockRate,
+      audioFormat.channelCount, samples_per_frame, audioFormat.bitsPerSample, 0,
+      &port));
+  // 接收回调
+  PJSUA2_CHECK_EXPR(
+      pjmedia_mem_capture_set_eof_cb2(port, (void *)this, cb_mem_capture_eof));
+  // 如果上面一步失败，就不会产生有效的 media id.
   // C++ way： 把 Port 加入到 conf，并接收新的 port id 到这个类的 id 属性
   registerMediaPort2(port, pool);
-  // 如果上面一步失败，就不会产生有效的 media id.
-  // 接收回调
-  pjmedia_mem_capture_set_eof_cb2(port, (void *)this, cb_mem_capture_eof);
+  PJ_LOG(3, ("AudioMediaUdsWriter", "id=%d", id));
 }
 
 void AudioMediaUdsWriter::onBufferEof() {
+  // PJ_LOG(3, ("AudioMediaUdsWriter", "onBufferEof"));
   // 如果不用 resample，缓冲的数据可以直接发送
   uint8_t *send_buf = buffer;
   size_t send_sz = buffer_size;

@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <sys/un.h>
 
+#include <functional>
 #include <iostream>
 #include <sstream>
 
@@ -30,6 +31,10 @@ AudioMediaUdsReader::AudioMediaUdsReader() : AudioMedia() {
 }
 
 AudioMediaUdsReader::~AudioMediaUdsReader() {
+  /// TODO: 死循环，退不出来的
+  if (read_thread.joinable()) {
+    read_thread.join();
+  }
   if (id != PJSUA_INVALID_ID) {
     unregisterMediaPort();
   }
@@ -67,48 +72,104 @@ void AudioMediaUdsReader::createPlayer(const pj::MediaFormatAudio &audioFormat,
                                    audioFormat.frameTimeUsec / 1000000;
 
   //分配缓冲区
+  assert(buffer_size == sizeof(buffer0));
   buffer = (uint8_t *)pj_pool_calloc(pool, buffer_size, sizeof(uint8_t));
 
-  // 打开 Unix domain socket
-  bind_addr = (sockaddr_un *)pj_pool_calloc(pool, 1, sizeof(sockaddr_un));
-  bind_addr->sun_family = AF_LOCAL;
-  strncpy(bind_addr->sun_path, path.c_str(), sizeof(bind_addr->sun_path) - 1);
-  sockfd = socket(AF_LOCAL, SOCK_DGRAM, 0);
-  if (sockfd == -1) {
-    ostringstream oss;
-    oss << "socket error (" << errno << "): " << strerror(errno);
-    cerr << oss.str() << endl;
-    throw new runtime_error(oss.str());
-  }
+  // 准备绑定文件
+  memset(&recv_addr, 0, sizeof(sockaddr_un));
+  recv_addr.sun_family = AF_LOCAL;
+  strncpy(recv_addr.sun_path, path.c_str(), sizeof(recv_addr.sun_path) - 1);
   struct stat statbuf;
-  if (!stat(path.c_str(), &statbuf)) {
-    if (unlink(path.c_str())) {
+  if (!stat(recv_addr.sun_path, &statbuf)) {
+    if (unlink(recv_addr.sun_path)) {
       ostringstream oss;
-      oss << "unlink error (" << errno << "): " << strerror(errno);
+      oss << THIS_FILE " unlink error (" << errno << "): " << strerror(errno);
       cerr << oss.str() << endl;
       throw new runtime_error(oss.str());
     }
   }
-  if (bind(sockfd, (sockaddr *)bind_addr, sizeof(bind_addr))) {
+  // 打开 Unix domain socket
+  sockfd = socket(AF_LOCAL, SOCK_DGRAM, 0);
+  if (sockfd == -1) {
     ostringstream oss;
-    oss << "socket bind error (" << errno << "): " << strerror(errno);
+    oss << THIS_FILE " socket error (" << errno << "): " << strerror(errno);
+    cerr << oss.str() << endl;
+    throw new runtime_error(oss.str());
+  }
+  // 绑定文件
+  if (bind(sockfd, (const sockaddr *)&recv_addr, sizeof(recv_addr))) {
+    ostringstream oss;
+    oss << THIS_FILE " socket bind error (" << errno
+        << "): " << strerror(errno);
     cerr << oss.str() << endl;
     throw new runtime_error(oss.str());
   }
 
   // 建立内存播放 Audio Port
-  pjmedia_mem_player_create(
+  PJ_LOG(3, ("AudioMediaUdsReader", "RECV buffer_size=%d", buffer_size));
+  PJ_LOG(3,
+         ("AudioMediaUdsReader", "RECV clock_rate=%d", audioFormat.clockRate));
+  PJ_LOG(3, ("AudioMediaUdsReader", "RECV channel_count=%d",
+             audioFormat.channelCount));
+  PJ_LOG(3, ("AudioMediaUdsReader", "RECV samples_per_frame=%d",
+             samples_per_frame));
+  PJ_LOG(3, ("AudioMediaUdsReader", "RECV bits_per_sample=%d",
+             audioFormat.bitsPerSample));
+  memset(buffer0, 0, sizeof(buffer0));
+  memset(buffer, 0, buffer_size);
+  PJSUA2_CHECK_EXPR(pjmedia_mem_player_create(
       pool, buffer, buffer_size, audioFormat.clockRate,
-      audioFormat.channelCount, samples_per_frame, audioFormat.bitsPerSample,
-      pjmedia_mem_player_option::PJMEDIA_MEM_NO_LOOP, &port);
+      audioFormat.channelCount, samples_per_frame, audioFormat.bitsPerSample, 0,
+      &port));
+  // 接收回调
+  PJSUA2_CHECK_EXPR(
+      pjmedia_mem_player_set_eof_cb2(port, (void *)this, cb_mem_play_eof));
+  // 如果上面一步失败，就不会产生有效的 media id.
   // C++ way： 把 Port 加入到 conf，并接收新的 port id 到这个类的 id 属性
   registerMediaPort2(port, pool);
-  // 如果上面一步失败，就不会产生有效的 media id.
-  // 接收回调
-  pjmedia_mem_player_set_eof_cb2(port, (void *)this, cb_mem_play_eof);
+  PJ_LOG(3, ("AudioMediaUdsReader", "id=%d", id));
+
+  // 启动接收线程（先来个死循环试试）
+  PJ_LOG(3, ("AudioMediaUdsReader", "Reader worker thread starting ..."));
+  {
+    mutex mtx;
+    condition_variable cv;
+    unique_lock<mutex> lk(mtx);
+    read_thread = thread(&AudioMediaUdsReader::read_worker, this, ref(cv));
+    cv.wait(lk);
+  }
+  PJ_LOG(3, ("AudioMediaUdsReader", "Reader worker thread started."));
 }
 
-void AudioMediaUdsReader::onBufferEof() {}
+void AudioMediaUdsReader::onBufferEof() {
+  lock_guard<mutex> lk(read_mutext);
+  memcpy(buffer, buffer0, sizeof(buffer0));
+  memset(buffer0, 0, sizeof(buffer0));
+}
+
+void AudioMediaUdsReader::read_worker(std::condition_variable &cvStart) {
+  cvStart.notify_all();
+  uint8_t buf_tmp[1920];
+  ssize_t length;
+  for (;;) {
+    length = recv(sockfd, buf_tmp, sizeof(buf_tmp), 0);
+    // cout << THIS_FILE " read_worker:  " << length << "bytes received." <<
+    // endl;
+    if (length == -1) {
+      ostringstream oss;
+      oss << THIS_FILE " socket recv error (" << errno
+          << "): " << strerror(errno);
+      cerr << oss.str() << endl;
+      throw new runtime_error(oss.str());
+    }
+    // TRTC SDK 一定是 1920
+    assert(length == 1920);
+    {
+      lock_guard<mutex> lk(read_mutext);
+      memcpy(buffer0, buf_tmp, sizeof(buffer0));
+    }
+  }
+}
 
 void AudioMediaUdsReader::cb_mem_play_eof(pjmedia_port *port, void *usr_data) {
   ((AudioMediaUdsReader *)usr_data)->onBufferEof();

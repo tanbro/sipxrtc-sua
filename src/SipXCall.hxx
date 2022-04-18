@@ -1,5 +1,5 @@
-#ifndef __SipXCall__
-#define __SipXCall__
+#ifndef __sipxsua_SipXCall__
+#define __sipxsua_SipXCall__
 
 #include <memory>
 #include <set>
@@ -7,6 +7,7 @@
 #include <pjmedia.h>
 #include <pjsua2.hpp>
 
+#include "AudioMediaUdsReader.hxx"
 #include "AudioMediaUdsWriter.hxx"
 
 namespace sipxsua {
@@ -24,7 +25,8 @@ private:
   pj_pool_t *pool;
   pjmedia_port *record_port;
 
-  AudioMediaUdsWriter *recorder = nullptr;
+  AudioMediaUdsReader *reader = nullptr;
+  AudioMediaUdsWriter *writer = nullptr;
 };
 
 } // namespace sipxsua

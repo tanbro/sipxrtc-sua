@@ -16,8 +16,11 @@ SipXCall::SipXCall(pj::Account &acc, int call_id) : Call(acc, call_id) {
 }
 
 SipXCall::~SipXCall() {
-  if (recorder != nullptr) {
-    delete recorder;
+  if (reader != nullptr) {
+    delete reader;
+  }
+  if (writer != nullptr) {
+    delete writer;
   }
   pj_pool_release(pool);
   pj_caching_pool_destroy(&cachingPool);
@@ -36,24 +39,30 @@ void SipXCall::onCallMediaState(pj::OnCallMediaStateParam &prm) {
   pj::AudDevManager &mgr = ep.audDevManager();
   auto ci = getInfo();
 
-  auto remote_med = getAudioMedia(-1); // 收到的来自远端的声音媒体
-  // auto local_med =
-  //     ep.audDevManager().getCaptureDevMedia(); // 来自本地采集的声音媒体
-  // 本地 x 远端
-  // remote_med.startTransmit(mgr.getPlaybackDevMedia());
-  // local_med.startTransmit(remote_med);
+  auto peerMedia = getAudioMedia(-1); // 收到的来自远端的声音媒体
+  auto peerAuFmt = peerMedia.getPortInfo().format;
 
-  // auto remotePortInfo = remote_med.getPortInfo();
-  // auto remotePortFmt = remotePortInfo.format;
-
-  if (recorder != nullptr) {
-    delete recorder;
-    recorder = nullptr;
+  if (reader != nullptr) {
+    delete reader;
+    reader = nullptr;
   }
-  recorder = new AudioMediaUdsWriter();
-  auto audioFormat = getAudioMedia(-1).getPortInfo().format;
-  recorder->createRecorder(audioFormat, "/tmp/sipxrtp-sip.sock", 48000, 200);
-  remote_med.startTransmit(*recorder);
+  reader = new AudioMediaUdsReader();
+  struct pj::MediaFormatAudio rtcAuFmt;
+  rtcAuFmt.channelCount = 1;
+  rtcAuFmt.clockRate = 48000;
+  rtcAuFmt.bitsPerSample = 16;
+  rtcAuFmt.frameTimeUsec = 20000; // 20 毫秒
+  reader->createPlayer(rtcAuFmt, "/tmp/sipxrtp-trtc.sock", 48000, 20);
+
+  if (writer != nullptr) {
+    delete writer;
+    writer = nullptr;
+  }
+  writer = new AudioMediaUdsWriter();
+  writer->createRecorder(peerAuFmt, "/tmp/sipxrtp-sua.sock", 48000, 20);
+
+  reader->startTransmit(peerMedia);
+  peerMedia.startTransmit(*writer);
 }
 
 } // namespace sipxsua
