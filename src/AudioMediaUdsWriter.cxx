@@ -1,5 +1,6 @@
 #include "AudioMediaUdsWriter.hxx"
 
+#include <assert.h>
 #include <errno.h>
 #include <error.h>
 #include <memory.h>
@@ -23,7 +24,6 @@ AudioMediaUdsWriter::AudioMediaUdsWriter() : AudioMedia() {
   pj_caching_pool_init(&cachingPool, NULL, 0);
   pool = pj_pool_create(&cachingPool.factory, "AudioMediaUdsWriter", 8192, 8192,
                         NULL);
-  err_buf = (char *)pj_pool_calloc(pool, err_sz, sizeof(char));
 }
 
 AudioMediaUdsWriter::~AudioMediaUdsWriter() {
@@ -40,24 +40,38 @@ AudioMediaUdsWriter::~AudioMediaUdsWriter() {
   pj_caching_pool_destroy(&cachingPool);
 }
 
-void AudioMediaUdsWriter::createRecorder(const Call *call,
-                                         const string &sendto_path,
-                                         unsigned sample_rate,
-                                         unsigned buffer_msec) {
-  if (id != PJSUA_INVALID_ID) {
-    /// TODO: 不允许重复创建！！！
-    throw new runtime_error("Duplicate invoking on createRecorder");
-  }
+void AudioMediaUdsWriter::createRecorder(
+    const pj::MediaFormatAudio &audioFormat, const string &sendtoPath,
+    unsigned sampleRate, unsigned bufferMSec) {
+  assert(id == PJSUA_INVALID_ID); // 不允许重复创建！！！
 
-  _dst_clock_rate = sample_rate;
-  // _dst_channel_count = channel_count;
-  // _dst_samples_per_frame = samples_per_frame;
-  // _dst_bits_per_sample = bits_per_sample;
+  // 只支持 Mono channel
+  assert(audioFormat.channelCount == 1);
+  // 只支持 16bits sampling
+  assert(audioFormat.bitsPerSample == 16);
+
+  this->audioFormat = audioFormat;
+  this->sampleRate = sampleRate;
+
+  // 远端的声音媒体作为 source，获取它的格式规格
+  // 计算缓冲区大小
+  size_t bytes_per_sec = audioFormat.clockRate * audioFormat.channelCount *
+                         audioFormat.bitsPerSample / 8; // 每秒的字节数
+  buffer_size = bytes_per_sec * bufferMSec / 1000;
+  unsigned int samples_per_frame = audioFormat.clockRate *
+                                   audioFormat.channelCount *
+                                   audioFormat.frameTimeUsec / 1000000;
+
+  PJ_LOG(3,
+         ("AudioMediaUdsWriter", "samples_per_frame: %u", samples_per_frame));
+
+  //分配缓冲区
+  buffer = (uint8_t *)pj_pool_calloc(pool, buffer_size, sizeof(uint8_t));
 
   // 打开 Unix domain socket
   sendto_addr = (sockaddr_un *)pj_pool_calloc(pool, 1, sizeof(sockaddr_un));
   sendto_addr->sun_family = AF_LOCAL;
-  strncpy(sendto_addr->sun_path, sendto_path.c_str(),
+  strncpy(sendto_addr->sun_path, sendtoPath.c_str(),
           sizeof(sendto_addr->sun_path) - 1);
 
   sockfd = socket(AF_LOCAL, SOCK_DGRAM, 0);
@@ -68,45 +82,26 @@ void AudioMediaUdsWriter::createRecorder(const Call *call,
     throw new runtime_error(oss.str());
   }
 
-  // 远端的声音媒体作为 source，获取它的格式规格
-  auto src_med = call->getAudioMedia(-1);
-  auto src_port_info = src_med.getPortInfo();
-  pjsua_conf_port_info _port_info;
-  pjsua_conf_get_port_info(src_port_info.portId, &_port_info);
-  _src_clock_rate = _port_info.clock_rate;
-  _src_channel_count = _port_info.channel_count;
-  _src_samples_per_frame = _port_info.samples_per_frame;
-  _src_bits_per_sample = _port_info.bits_per_sample;
-  // 只支持 Mono channel
-  assert(_src_channel_count == 1);
-
-  // 缓冲远端过来的声音流
-  // 计算缓冲区大小
-  // 每秒的字节数
-  size_t bytes_per_sec =
-      _src_clock_rate * _src_channel_count * _src_bits_per_sample / 8;
-  buffer_size = bytes_per_sec * buffer_msec / 1000;
-  buffer = (uint8_t *)pj_pool_calloc(pool, buffer_size, sizeof(uint8_t));
-
   // 新建 resampler
-  if (_src_clock_rate != _dst_clock_rate) {
-    // 只支持 16bits sample
-    assert(sizeof(short) * 8 == _src_bits_per_sample);
+  if (sampleRate != audioFormat.clockRate) {
+
     int src_err = 0;
-    src_state = src_new(SRC_SINC_MEDIUM_QUALITY, _src_channel_count, &src_err);
+    src_state =
+        src_new(SRC_SINC_MEDIUM_QUALITY, audioFormat.channelCount, &src_err);
     if (src_err) {
       ostringstream oss;
       oss << "samplerate src_new() error (" << src_err << ") "
           << src_strerror(src_err) << endl;
+      cerr << oss.str() << endl;
       throw new runtime_error(oss.str());
     }
     // 重采样率比例：output_sample_rate / input_sample_rate
-    src_data.src_ratio = (double)_dst_clock_rate / (double)_src_clock_rate;
+    src_data.src_ratio = (double)sampleRate / (double)audioFormat.clockRate;
     // 计算输入数据的 frame(采样!) 个数！ (PJ一般是16bit) 的 PCM
-    src_data.input_frames = _src_clock_rate * buffer_msec / 1000;
+    src_data.input_frames = audioFormat.clockRate * bufferMSec / 1000;
     // 计算输出数据的 frame(采样!)个数
     src_data.output_frames =
-        src_data.input_frames * _dst_clock_rate / _src_clock_rate;
+        src_data.input_frames * sampleRate / audioFormat.clockRate;
     // 分配输入缓冲
     src_data.data_in =
         (float *)pj_pool_calloc(pool, src_data.input_frames, sizeof(float));
@@ -119,20 +114,12 @@ void AudioMediaUdsWriter::createRecorder(const Call *call,
   }
 
   // 建立内存捕获 Audio Port
-  pjmedia_mem_capture_create(pool, buffer, buffer_size, _src_clock_rate,
-                             _src_channel_count, _src_samples_per_frame,
-                             _src_bits_per_sample, 0, &port);
+  pjmedia_mem_capture_create(pool, buffer, buffer_size, audioFormat.clockRate,
+                             audioFormat.channelCount, samples_per_frame,
+                             audioFormat.bitsPerSample, 0, &port);
   // C++ way： 把 Port 加入到 conf，并接收新的 port id 到这个类的 id 属性
   registerMediaPort2(port, pool);
   // 如果上面一步失败，就不会产生有效的 media id.
-  if (id == PJSUA_INVALID_ID) {
-    ostringstream oss;
-    oss << "pjsua_conf_add_port PJSUA_INVALID_ID error: " << err_buf;
-    cerr << oss.str() << endl;
-    throw new runtime_error(oss.str());
-  } else {
-    PJ_LOG(4, ("AudioMediaUdsWriter", "createRecorder: conf_port_id=%d", id));
-  }
   // 接收回调
   pjmedia_mem_capture_set_eof_cb2(port, (void *)this, cb_mem_capture_eof);
 }
@@ -159,6 +146,7 @@ void AudioMediaUdsWriter::onFullfill(pjmedia_port *port) {
       ostringstream oss;
       oss << "samplerate src_reset() error (" << src_err << ") "
           << src_strerror(src_err) << endl;
+      cerr << oss.str() << endl;
       throw new runtime_error(oss.str());
     }
     // 原始16bit采样数据转float采样数据装载到输入缓冲
@@ -171,6 +159,7 @@ void AudioMediaUdsWriter::onFullfill(pjmedia_port *port) {
         ostringstream oss;
         oss << "samplerate src_process() error (" << src_err << ") "
             << src_strerror(src_err) << endl;
+        cerr << oss.str() << endl;
         throw new runtime_error(oss.str());
       }
     } while (src_data.output_frames_gen < src_data.output_frames);
@@ -183,16 +172,18 @@ void AudioMediaUdsWriter::onFullfill(pjmedia_port *port) {
   }
 
   // 发送!
-  ssize_t n = sendto(sockfd, send_buf, send_sz, 0,
-                     (struct sockaddr *)sendto_addr, sizeof(*sendto_addr));
-  if (n < 0) {
+  ssize_t sent_bytes =
+      sendto(sockfd, send_buf, send_sz, 0, (struct sockaddr *)sendto_addr,
+             sizeof(*sendto_addr));
+  if (sent_bytes < 0) {
     switch (errno) {
     case ENOENT:
       break;
+    case ECONNREFUSED:
+      break;
     default: {
-      PJ_LOG(2,
-             ("AudioMediaUdsWriter", "Unix Socket DATAGRAM send error (%d): %s",
-              errno, strerror(errno)));
+      PJ_LOG(2, ("AudioMediaUdsWriter", "UDS data gram send error (%d): %s",
+                 errno, strerror(errno)));
     } break;
     }
   }

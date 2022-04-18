@@ -12,6 +12,7 @@
 #include "SipXCall.hxx"
 #include "global.hxx"
 
+using namespace std;
 using namespace sipxsua;
 
 static bool running = true;
@@ -29,7 +30,7 @@ int main(int argc, char *argv[]) {
   ep.libInit(ep_cfg);
 
   auto codecs = ep.codecEnum2();
-  std::sort(codecs.begin(), codecs.end(), [](pj::CodecInfo a, pj::CodecInfo b) {
+  sort(codecs.begin(), codecs.end(), [](pj::CodecInfo a, pj::CodecInfo b) {
     return a.priority > b.priority;
   });
   for (auto it = codecs.begin(); it < codecs.end(); ++it) {
@@ -42,23 +43,27 @@ int main(int argc, char *argv[]) {
     cfg.port = 5060;
     ep.transportCreate(PJSIP_TRANSPORT_UDP, cfg);
   } catch (pj::Error &err) {
-    std::cout << err.info() << std::endl;
+    cout << err.info() << endl;
     return 1;
   }
 
   // Start the library (worker threads etc)
   ep.libStart();
 
-  std::string line;
+  string line;
 
   SipXAccount *acc = nullptr;
   {
     // 本地账户
-    pj::AccountConfig acfg;
-    acfg.idUri = "sip:0.0.0.0";
+    pj::AccountConfig acc_cfg;
+    acc_cfg.idUri = "sip:0.0.0.0";
+    // acc_cfg.idUri = "sip:8007@192.168.2.202";
+    // acc_cfg.regConfig.registrarUri = "sip:192.168.2.202";
+    // acc_cfg.sipConfig.authCreds.push_back(
+    //     pj::AuthCredInfo("digest", "*", "8007", 0, "hesong"));
     // Create the account
     acc = new SipXAccount();
-    acc->create(acfg, true);
+    acc->create(acc_cfg, true);
   }
 
   // 使用空设备
@@ -66,15 +71,15 @@ int main(int argc, char *argv[]) {
   aud_dev_mgr.setNullDev();
   assert(0 == aud_dev_mgr.getDevCount());
 
-  std::cout << "输入要呼叫的 SIP URI:" << std::endl;
-  std::getline(std::cin, line);
+  cout << "输入要呼叫的 SIP URI:" << endl;
+  getline(cin, line);
   if (!line.empty()) {
     pj::Call *call = new SipXCall(*acc);
     pj::CallOpParam prm(true); // Use default call settings
     try {
       call->makeCall(line, prm);
     } catch (pj::Error &err) {
-      std::cout << err.info() << std::endl;
+      cout << err.info() << endl;
     }
   }
 

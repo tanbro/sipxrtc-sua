@@ -46,8 +46,9 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 
 # include 目录
 target_include_directories(${PROJECT_NAME}
-  PRIVATE "${CMAKE_CURRENT_LIST_DIR}/include/private"
-  PUBLIC "${CMAKE_CURRENT_LIST_DIR}/include/public"
+  PRIVATE ${SRC_DIR}
+  PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include/private
+  PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include/public
 )
 
 # output dir, name, rpath, ...
