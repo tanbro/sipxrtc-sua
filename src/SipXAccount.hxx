@@ -1,5 +1,5 @@
 #ifndef __sipxsua_SipXAccount__
-#define __sipxsua_SipXAccount__
+#define __sipxsua_SipXAccount__ 1
 
 #include <pjsua2.hpp>
 

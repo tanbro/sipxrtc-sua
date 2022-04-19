@@ -1,5 +1,5 @@
 #ifndef __sipxsua_SipXCall__
-#define __sipxsua_SipXCall__
+#define __sipxsua_SipXCall__ 1
 
 #include <memory>
 #include <set>

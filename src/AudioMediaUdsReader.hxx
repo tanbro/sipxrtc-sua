@@ -1,5 +1,5 @@
 #ifndef __sipxsua_AudioMediaUdsReader__
-#define __sipxsua_AudioMediaUdsReader__
+#define __sipxsua_AudioMediaUdsReader__ 1
 
 #include <stdint.h>
 
@@ -23,7 +23,7 @@ namespace sipxsua {
 class AudioMediaUdsReader : public pj::AudioMedia {
 public:
   AudioMediaUdsReader();
-  ~AudioMediaUdsReader();
+  virtual ~AudioMediaUdsReader();
 
   void createPlayer(const pj::MediaFormatAudio &audioFormat,
                     const std::string &path, unsigned sampleRate,

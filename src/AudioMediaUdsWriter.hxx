@@ -1,5 +1,5 @@
 #ifndef __sipxsua_AudioMediaUdsWriter__
-#define __sipxsua_AudioMediaUdsWriter__
+#define __sipxsua_AudioMediaUdsWriter__ 1
 
 #include <stdint.h>
 
@@ -20,7 +20,7 @@ class AudioMediaUdsWriter : public pj::AudioMedia {
 public:
   AudioMediaUdsWriter();
 
-  ~AudioMediaUdsWriter();
+  virtual ~AudioMediaUdsWriter();
 
   void createRecorder(const pj::MediaFormatAudio &audioFormat,
                       const std::string &sendtoPath, unsigned sampleRate,
