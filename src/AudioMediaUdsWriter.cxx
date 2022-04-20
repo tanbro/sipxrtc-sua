@@ -11,6 +11,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <system_error>
 
 #define THIS_FILE "AudioMediaUdsWriter.cxx"
 
@@ -70,26 +71,18 @@ void AudioMediaUdsWriter::createRecorder(
   sendto_addr->sun_family = AF_LOCAL;
   strncpy(sendto_addr->sun_path, sendtoPath.c_str(),
           sizeof(sendto_addr->sun_path) - 1);
-
   sockfd = socket(AF_LOCAL, SOCK_DGRAM, 0);
   if (sockfd == -1) {
-    ostringstream oss;
-    oss << "socket error (" << errno << "): " << strerror(errno);
-    cerr << oss.str() << endl;
-    throw new runtime_error(oss.str());
+    throw new system_error(errno, system_category());
   }
 
   // 新建 resampler
   if (sampleRate != audioFormat.clockRate) {
-    int src_err = 0;
+    int src_errno;
     src_state =
-        src_new(SRC_SINC_MEDIUM_QUALITY, audioFormat.channelCount, &src_err);
-    if (src_err) {
-      ostringstream oss;
-      oss << "samplerate src_new() error (" << src_err << ") "
-          << src_strerror(src_err) << endl;
-      cerr << oss.str() << endl;
-      throw new runtime_error(oss.str());
+        src_new(SRC_SINC_MEDIUM_QUALITY, audioFormat.channelCount, &src_errno);
+    if (src_errno) {
+      throw new runtime_error(src_strerror(src_errno));
     }
     // 重采样率比例：output_sample_rate / input_sample_rate
     src_data.src_ratio = (double)sampleRate / (double)audioFormat.clockRate;
@@ -131,33 +124,23 @@ void AudioMediaUdsWriter::onBufferEof() {
   // Resample?
   if (NULL != src_state) {
     // 重采样！
-    int src_err = 0;
+    int src_errno;
     // The src_reset function resets the internal state of the sample rate
     // converter object to the same state it had immediately after its creation
     // using src_new. This should be called whenever a sample rate converter is
     // to be used on two separate, unrelated pieces of audio.
-    src_err = src_reset(src_state);
-    if (src_err) {
-      ostringstream oss;
-      oss << "samplerate src_reset() error (" << src_err << ") "
-          << src_strerror(src_err) << endl;
-      cerr << oss.str() << endl;
-      throw new runtime_error(oss.str());
+    if ((src_errno = src_reset(src_state))) {
+      throw new runtime_error(src_strerror(src_errno));
     }
     // 原始16bit采样数据转float采样数据装载到输入缓冲
     src_short_to_float_array((const short *)buffer, (float *)src_data.data_in,
                              src_data.input_frames);
     // 重采样处理：输入=>输出
-    do {
-      src_err = src_process(src_state, &src_data);
-      if (src_err) {
-        ostringstream oss;
-        oss << "samplerate src_process() error (" << src_err << ") "
-            << src_strerror(src_err) << endl;
-        cerr << oss.str() << endl;
-        throw new runtime_error(oss.str());
+    while (src_data.output_frames_gen < src_data.output_frames) {
+      if ((src_errno = src_process(src_state, &src_data))) {
+        throw new runtime_error(src_strerror(src_errno));
       }
-    } while (src_data.output_frames_gen < src_data.output_frames);
+    }
     // 分配结果数据缓冲区，并将输出float采样的缓冲数据该写成16Kbit采样的数据写入到结果缓冲
     src_float_to_short_array(src_data.data_out, resampled_short_array,
                              src_data.output_frames);
@@ -167,19 +150,18 @@ void AudioMediaUdsWriter::onBufferEof() {
   }
 
   // 发送!
-  ssize_t sent_bytes =
+  ssize_t n_bytes =
       sendto(sockfd, send_buf, send_sz, 0, (struct sockaddr *)sendto_addr,
              sizeof(*sendto_addr));
-  if (sent_bytes < 0) {
+  if (n_bytes < 0) {
     switch (errno) {
     case ENOENT:
       break;
     case ECONNREFUSED:
       break;
-    default: {
-      PJ_LOG(2, ("AudioMediaUdsWriter", "UDS data gram send error (%d): %s",
-                 errno, strerror(errno)));
-    } break;
+    default:
+      throw new system_error(errno, system_category());
+      break;
     }
   }
 }

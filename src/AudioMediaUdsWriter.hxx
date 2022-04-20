@@ -52,7 +52,7 @@ private:
   pj_pool_t *pool;
 
   SRC_STATE *src_state = NULL;
-  SRC_DATA src_data = {0};
+  SRC_DATA src_data;
   short *resampled_short_array = NULL;
 };
 
