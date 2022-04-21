@@ -141,3 +141,19 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${SAMPLERATE_INCLUDE_DIRS})
 target_compile_options(${PROJECT_NAME} PRIVATE ${SAMPLERATE_CFLAGS})
 target_link_directories(${PROJECT_NAME} PRIVATE ${SAMPLERATE_LIBRARY_DIRS})
 target_link_options(${PROJECT_NAME} PRIVATE ${SAMPLERATE_LDFLAGS_OTHER})
+
+# dependency of this project: gflags
+pkg_check_modules(GFLAGS REQUIRED gflags)
+target_link_libraries(${PROJECT_NAME} ${GFLAGS_LDFLAGS})
+target_include_directories(${PROJECT_NAME} PRIVATE ${GFLAGS_INCLUDE_DIRS})
+target_compile_options(${PROJECT_NAME} PRIVATE ${GFLAGS_CFLAGS})
+target_link_directories(${PROJECT_NAME} PRIVATE ${GFLAGS_LIBRARY_DIRS})
+target_link_options(${PROJECT_NAME} PRIVATE ${GFLAGS_LDFLAGS_OTHER})
+
+# dependency of this project: glog
+pkg_check_modules(LIBGLOG REQUIRED libglog)
+target_link_libraries(${PROJECT_NAME} ${LIBGLOG_LDFLAGS})
+target_include_directories(${PROJECT_NAME} PRIVATE ${LIBGLOG_INCLUDE_DIRS})
+target_compile_options(${PROJECT_NAME} PRIVATE ${LIBGLOG_CFLAGS})
+target_link_directories(${PROJECT_NAME} PRIVATE ${LIBGLOG_LIBRARY_DIRS})
+target_link_options(${PROJECT_NAME} PRIVATE ${LIBGLOG_LDFLAGS_OTHER})
