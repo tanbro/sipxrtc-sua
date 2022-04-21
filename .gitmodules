@@ -2,3 +2,7 @@
 	path = submodules/pjproject
 	url = https://github.com/pjsip/pjproject.git
 	ignore = dirty
+[submodule "submodules/bcg729"]
+	path = submodules/bcg729
+	url = https://github.com/BelledonneCommunications/bcg729.git
+	ignore = dirty

@@ -18,6 +18,18 @@ option(
   TRUE
 )
 
+option(
+  WITH_G729
+  "Whether to use libbcg729. When static link pjproject, and the audio codec is enabled in pjproject, the option must be \"YES\" here"
+  TRUE
+)
+
+option(
+  WITH_OPUS
+  "Whether to use libopus. When static link pjproject, and the audio codec is enabled in pjproject, the option must be \"YES\" here!"
+  TRUE
+)
+
 add_compile_options("$<$<CONFIG:DEBUG>:-D_DEBUG>")
 
 # pkg-config 是必须的!
@@ -142,6 +154,26 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${SAMPLERATE_INCLUDE_DIRS})
 target_compile_options(${PROJECT_NAME} PRIVATE ${SAMPLERATE_CFLAGS})
 target_link_directories(${PROJECT_NAME} PRIVATE ${SAMPLERATE_LIBRARY_DIRS})
 target_link_options(${PROJECT_NAME} PRIVATE ${SAMPLERATE_LDFLAGS_OTHER})
+
+# g729
+if (${WITH_G729})
+  pkg_check_modules(LIBBCG729 REQUIRED libbcg729)
+  target_link_libraries(${PROJECT_NAME} ${LIBBCG729_LDFLAGS})
+  target_include_directories(${PROJECT_NAME} PRIVATE ${LIBBCG729_INCLUDE_DIRS})
+  target_compile_options(${PROJECT_NAME} PRIVATE ${LIBBCG729_CFLAGS})
+  target_link_directories(${PROJECT_NAME} PRIVATE ${LIBBCG729_LIBRARY_DIRS})
+  target_link_options(${PROJECT_NAME} PRIVATE ${LIBBCG729_LDFLAGS_OTHER})
+endif()
+
+# opus
+if (${WITH_OPUS})
+  pkg_check_modules(OPUS REQUIRED opus)
+  target_link_libraries(${PROJECT_NAME} ${OPUS_LDFLAGS})
+  target_include_directories(${PROJECT_NAME} PRIVATE ${OPUS_INCLUDE_DIRS})
+  target_compile_options(${PROJECT_NAME} PRIVATE ${OPUS_CFLAGS})
+  target_link_directories(${PROJECT_NAME} PRIVATE ${OPUS_LIBRARY_DIRS})
+  target_link_options(${PROJECT_NAME} PRIVATE ${OPUS_LDFLAGS_OTHER})
+endif()
 
 # dependency of this project: gflags
 pkg_check_modules(GFLAGS REQUIRED gflags)

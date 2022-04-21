@@ -10,24 +10,19 @@
 
 PJ 可以使用 bcg729 (https://github.com/BelledonneCommunications/bcg729)，它已经被加入到了 submodules.
 
-首先我们要构建和安装 bcg729:
+我们将这个 submodule 检出到最近的发行版（目前是 1.1.1）:
 
 ```bash
-libtoolize --force
-aclocal
-autoheader
-automake --force-missing --add-missing
-autoconf
-./configure
+git checkout -b release-1.1.1 1.1.1
+```
+
+然后按照其 README 进行构建和安装:
+
+```bash
+cmake .
 make
 sudo make install
 ```
-
-PJ 在配置时会自动检测到 libbcg729!
-
-> 警告:
->
-> pjproject 2.12 目前采用的是 libbcg729 最新的 master 分支，而不是最近的发布版！
 
 ### opus
 
