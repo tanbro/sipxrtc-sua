@@ -92,11 +92,17 @@ set_target_properties(${PROJECT_NAME}
 # libpjproject
 if (${WITH_PJ_STATIC})
   # libpjproject ， 使用本地 submodules/pjproject 中的静态库
-  if (DEFINED ENV{PJDIR})
-    set(PJDIR $ENV{PJDIR})
+  if (PJDIR)
+    message(STATUS "PJDIR was set explicitly: \"${PJDIR}\"")
   else ()
-    set(PJDIR ${CMAKE_CURRENT_LIST_DIR}/submodules/pjproject)
-  endif ()
+    if (DEFINED ENV{PJDIR})
+      set(PJDIR $ENV{PJDIR})
+      message(STATUS "PJDIR was set from environment: \"${PJDIR}\"")
+    else ()
+      set(PJDIR ${CMAKE_CURRENT_LIST_DIR}/submodules/pjproject)
+      message(STATUS "use default PJDIR: \"${PJDIR}\"")
+    endif ()
+  endif()
 
   # 参照其 configure 的 build.mak 文件
   # as: export TARGET_NAME := x86_64-unknown-linux-gnu
@@ -185,7 +191,7 @@ if (${WITH_PJ_STATIC})
   if (${WITH_G729})
     pkg_check_modules(LIBBCG729 REQUIRED libbcg729)
     if (${WITH_G729_STATIC})
-    target_link_libraries(${PROJECT_NAME} ${LIBBCG729_LIBRARIES}.a)
+      target_link_libraries(${PROJECT_NAME} ${LIBBCG729_LIBRARIES}.a)
     else()
       target_link_libraries(${PROJECT_NAME} ${LIBBCG729_LIBRARIES})
     endif()
