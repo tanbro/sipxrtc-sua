@@ -4,13 +4,46 @@
 
 - 将/从自定义的内存块文件/流或者其它什么东西作为声音的IO
 
+## PJ 的常见 Audio 编码
+
+### G.729
+
+PJ 可以使用 bcg729 (https://github.com/BelledonneCommunications/bcg729)，它已经被加入到了 submodules.
+
+首先我们要构建和安装 bcg729:
+
+```bash
+libtoolize --force
+aclocal
+autoheader
+automake --force-missing --add-missing
+autoconf
+./configure
+make
+sudo make install
+```
+
+PJ 在配置时会自动检测到 libbcg729!
+
+> 警告:
+>
+> pjproject 2.12 目前采用的是 libbcg729 最新的 master 分支，而不是最近的发布版！
+
+### opus
+
+在 Ubuntu 2004 下，只需:
+
+```bash
+sudo install libopus-dev
+```
+
+## 音频流的获取与推送
+
 PJ 的声音管道：
 
 参照 <https://trac.pjsip.org/repos/wiki/media-flow> 的说明：
 
 ![media-flow](http://www.pjsip.org/images/media-flow.jpg)
-
-## 音频流的获取与推送
 
 ### 第一个思路 - 空设备
 

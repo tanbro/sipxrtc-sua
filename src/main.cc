@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
   // ep_cfg.medConfig.threadCnt = 4;
   // ep_cfg.logConfig.consoleLevel = 5;
   // ep_cfg.logConfig.level = 4;
-  // ep_cfg.logConfig.filename = "sua.log";
+  // ep_cfg.logConfig.filename = "../../../../logs/sua.log";
   // ep_cfg.logConfig.writer = &suaLogWriter;
   ep.libInit(ep_cfg);
 
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
     return a.priority > b.priority;
   });
   for (auto it = codecs.begin(); it < codecs.end(); ++it) {
-    VLOG(1) << "codec [" << (unsigned)it->priority << "] " << it->codecId;
+    DLOG(INFO) << "codec [" << (unsigned)it->priority << "] " << it->codecId;
   }
 
   // Create SIP transport. Error handling sample is shown

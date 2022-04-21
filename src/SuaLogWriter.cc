@@ -32,7 +32,7 @@ namespace sipxsua {
  *
  * Default: 4
  */
-void SuaLogWriter::write(const pj::LogEntry &entry) {
+inline void SuaLogWriter::write(const pj::LogEntry &entry) {
   switch (entry.level) {
   case 0: {
     LOG(FATAL) << "[" << entry.threadName << "] " << entry.msg;

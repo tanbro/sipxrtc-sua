@@ -759,7 +759,7 @@ fabric.properties
 ##############
 # My ignores #
 ##############
-/build/
+build/
 .cmake/
 [Tt][Mm][Pp]/
 [Tt][Ee][Mm][Pp]/
