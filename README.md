@@ -103,14 +103,21 @@ configure 的时候，指定 `--disable-sound` 参数让 `pjproject` 使用“�
       git checkout -b release-2.12 2.12
       ```
 
-      然后进行 `confgiure` 和 `make`。调用 `./configure` 的时候，注意需要指定 `--disable-sound` 参数让 `pjproject` 使用“空声音设备”。另外，由于只需要音频部分，还可关闭许多视频相关部分的配置:
+      按照其 [README](submodules/pjproject/README.txt) 说明进行 `confgiure` 和 `make`。
+
+      > 注意:
+      >
+      > - 使用 `--disable-sound` 参数，让 `pjproject` 使用“空声音设备”。这是这个项目所**必须**的。
+      > - 由于只需要音频部分，可关闭许多视频相关部分的配置
+
+      完整的构建命令是:
 
       ```bash
       ./configure --disable-video --disable-libyuv --disable-sdl --disable-ffmpeg --disable-v4l2 --disable-openh264 --disable-vpx --disable-libwebrtc --disable-sound
-      make dep && make
+      make dep && make clean && make
       ```
 
-      这个应用默认使用静态链接的方式调用 `pjproject`，所以如无必要，不需安装到系统。
+      本项目默认使用 `submodules/pjproject` 子目录的的相对路径静态链接 `pjproject`，故不必安装到系统。
 
 6. 构建该项目(`sipxsua` 执行文件)
 
