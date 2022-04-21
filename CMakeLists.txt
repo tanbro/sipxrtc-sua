@@ -15,19 +15,24 @@ set(CMAKE_C_STANDARD 11)
 option(
   WITH_PJ_STATIC
   "Link to libpjproject's shared/dynamic objects, which requires a configure with `--enable-shared`  and `sudo make install`"
-  TRUE
+  ON
 )
 
 option(
   WITH_G729
-  "Whether to use libbcg729. When static link pjproject, and the audio codec is enabled in pjproject, the option must be \"YES\" here"
-  TRUE
+  "Whether to use libbcg729. When static link pjproject, and the audio codec is enabled in pjproject, the option must be \"ON\" here"
+  ON
+)
+option(
+  WITH_G729_STATIC
+  "Whether to link libbcg729 staticly. Only avaiable when `WITH_G729` is \"ON\""
+  ON
 )
 
 option(
   WITH_OPUS
-  "Whether to use libopus. When static link pjproject, and the audio codec is enabled in pjproject, the option must be \"YES\" here!"
-  TRUE
+  "Whether to use libopus. When static link pjproject, and the audio codec is enabled in pjproject, the option must be \"ON\" here!"
+  OFF
 )
 
 add_compile_options("$<$<CONFIG:DEBUG>:-D_DEBUG>")
@@ -66,11 +71,12 @@ target_include_directories(${PROJECT_NAME}
 )
 
 # output dir, name, rpath, ...
+set(OUTDIR ${CMAKE_CURRENT_LIST_DIR}/out/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_CXX_COMPILER_ID}/${CMAKE_BUILD_TYPE})
 set_target_properties(${PROJECT_NAME}
     PROPERTIES
-    BUILD_RPATH lib
+    BUILD_RPATH ../lib
     # 输出目录
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/out/${CMAKE_BUILD_TYPE}/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_CXX_COMPILER_ID}/bin
+    RUNTIME_OUTPUT_DIRECTORY ${OUTDIR}/bin
 )
 
 # libpjproject
@@ -149,44 +155,48 @@ endif()
 
 # dependency of this project: libsamplerate
 pkg_check_modules(SAMPLERATE REQUIRED samplerate)
-target_link_libraries(${PROJECT_NAME} ${SAMPLERATE_LDFLAGS})
+target_link_libraries(${PROJECT_NAME} ${SAMPLERATE_LIBRARIES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${SAMPLERATE_INCLUDE_DIRS})
 target_compile_options(${PROJECT_NAME} PRIVATE ${SAMPLERATE_CFLAGS})
 target_link_directories(${PROJECT_NAME} PRIVATE ${SAMPLERATE_LIBRARY_DIRS})
-target_link_options(${PROJECT_NAME} PRIVATE ${SAMPLERATE_LDFLAGS_OTHER})
+target_link_options(${PROJECT_NAME} PRIVATE ${SAMPLERATE_LDFLAGS})
 
 # g729
 if (${WITH_G729})
   pkg_check_modules(LIBBCG729 REQUIRED libbcg729)
-  target_link_libraries(${PROJECT_NAME} ${LIBBCG729_LDFLAGS})
+  if (${WITH_G729_STATIC})
+   target_link_libraries(${PROJECT_NAME} ${LIBBCG729_LIBRARIES}.a)
+  else()
+    target_link_libraries(${PROJECT_NAME} ${LIBBCG729_LIBRARIES})
+  endif()
   target_include_directories(${PROJECT_NAME} PRIVATE ${LIBBCG729_INCLUDE_DIRS})
   target_compile_options(${PROJECT_NAME} PRIVATE ${LIBBCG729_CFLAGS})
   target_link_directories(${PROJECT_NAME} PRIVATE ${LIBBCG729_LIBRARY_DIRS})
-  target_link_options(${PROJECT_NAME} PRIVATE ${LIBBCG729_LDFLAGS_OTHER})
+  target_link_options(${PROJECT_NAME} PRIVATE ${LIBBCG729_LDFLAGS})
 endif()
 
 # opus
 if (${WITH_OPUS})
   pkg_check_modules(OPUS REQUIRED opus)
-  target_link_libraries(${PROJECT_NAME} ${OPUS_LDFLAGS})
+  target_link_libraries(${PROJECT_NAME} ${OPUS_LIBRARIES})
   target_include_directories(${PROJECT_NAME} PRIVATE ${OPUS_INCLUDE_DIRS})
   target_compile_options(${PROJECT_NAME} PRIVATE ${OPUS_CFLAGS})
   target_link_directories(${PROJECT_NAME} PRIVATE ${OPUS_LIBRARY_DIRS})
-  target_link_options(${PROJECT_NAME} PRIVATE ${OPUS_LDFLAGS_OTHER})
+  target_link_options(${PROJECT_NAME} PRIVATE ${OPUS_LDFLAGS})
 endif()
 
 # dependency of this project: gflags
 pkg_check_modules(GFLAGS REQUIRED gflags)
-target_link_libraries(${PROJECT_NAME} ${GFLAGS_LDFLAGS})
+target_link_libraries(${PROJECT_NAME} ${GFLAGS_LIBRARIES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${GFLAGS_INCLUDE_DIRS})
 target_compile_options(${PROJECT_NAME} PRIVATE ${GFLAGS_CFLAGS})
 target_link_directories(${PROJECT_NAME} PRIVATE ${GFLAGS_LIBRARY_DIRS})
-target_link_options(${PROJECT_NAME} PRIVATE ${GFLAGS_LDFLAGS_OTHER})
+target_link_options(${PROJECT_NAME} PRIVATE ${GFLAGS_LDFLAGS})
 
 # dependency of this project: glog
 pkg_check_modules(LIBGLOG REQUIRED libglog)
-target_link_libraries(${PROJECT_NAME} ${LIBGLOG_LDFLAGS})
+target_link_libraries(${PROJECT_NAME} ${LIBGLOG_LIBRARIES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${LIBGLOG_INCLUDE_DIRS})
 target_compile_options(${PROJECT_NAME} PRIVATE ${LIBGLOG_CFLAGS})
 target_link_directories(${PROJECT_NAME} PRIVATE ${LIBGLOG_LIBRARY_DIRS})
-target_link_options(${PROJECT_NAME} PRIVATE ${LIBGLOG_LDFLAGS_OTHER})
+target_link_options(${PROJECT_NAME} PRIVATE ${LIBGLOG_LDFLAGS})

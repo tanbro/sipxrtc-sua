@@ -8,11 +8,11 @@
             "name": "启动 sipxsua (Debug/Linux-x86_64-GNU)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/out/Debug/Linux-x86_64-GNU/bin/sipxsua",
+            "program": "${workspaceFolder}/out/Linux-x86_64-GNU/Debug/bin/sipxsua",
             "args": [
                 "-v=1"
             ],
-            "cwd": "${workspaceFolder}/out/Debug/Linux-x86_64-GNU/bin",
+            "cwd": "${workspaceFolder}/out/Linux-x86_64-GNU/Debug/bin",
             "environment": [
                 {
                     "name": "GLOG_logtostderr",
