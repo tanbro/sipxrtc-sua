@@ -4,13 +4,21 @@ if (POLICY CMP0048)
   cmake_policy(SET CMP0048 NEW)
 endif (POLICY CMP0048)
 
-# 导出 Clang compile_commands.json
-set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+
+# pkg-config 是必须的!
+find_package(PkgConfig REQUIRED)
+
+# If the use of the -pthread compiler and linker flag is preferred then the caller can set this variable to TRUE.
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+
+# 导出 Clang compile_commands.json 给 IDE 使用
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # 全局语言标准
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_C_STANDARD 11)
 
 option(
   WITH_PJ_STATIC
@@ -19,8 +27,14 @@ option(
 )
 
 option(
+  WITH_OPENSSL
+  "Whether to use openssl library. When static link pjproject, and openssl is enabled in it, the option must be \"ON\" here"
+  ON
+)
+
+option(
   WITH_G729
-  "Whether to use libbcg729. When static link pjproject, and the audio codec is enabled in pjproject, the option must be \"ON\" here"
+  "Whether to use libbcg729. When static link pjproject, and the audio codec is enabled in it, the option must be \"ON\" here"
   ON
 )
 option(
@@ -31,14 +45,9 @@ option(
 
 option(
   WITH_OPUS
-  "Whether to use libopus. When static link pjproject, and the audio codec is enabled in pjproject, the option must be \"ON\" here!"
-  OFF
+  "Whether to use libopus. When static link pjproject, and the audio codec is enabled in it, the option must be \"ON\" here!"
+  ON
 )
-
-add_compile_options("$<$<CONFIG:DEBUG>:-D_DEBUG>")
-
-# pkg-config 是必须的!
-find_package(PkgConfig REQUIRED)
 
 # 项目：这个执行文件
 project(sipxsua)
@@ -74,6 +83,7 @@ target_include_directories(${PROJECT_NAME}
 set(OUTDIR ${CMAKE_CURRENT_LIST_DIR}/out/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_CXX_COMPILER_ID}/${CMAKE_BUILD_TYPE})
 set_target_properties(${PROJECT_NAME}
     PROPERTIES
+    # -Wl,-rpath
     BUILD_RPATH ../lib
     # 输出目录
     RUNTIME_OUTPUT_DIRECTORY ${OUTDIR}/bin
@@ -135,21 +145,75 @@ if (${WITH_PJ_STATIC})
   )
 
   list(APPEND PJ_LIB_FILES ${PJ_THIRD_PARTY_LIB_FILES})
-  list(APPEND PJ_LIB_FILES ssl crypto uuid m rt pthread)
+  # list(APPEND PJ_LIB_FILES ssl crypto uuid m rt pthread)
 
-  target_link_libraries(${PROJECT_NAME} ${PJ_LIB_FILES})
-  target_include_directories(${PROJECT_NAME} PRIVATE ${PJ_INCLUDE_DIRS})
   target_compile_options(${PROJECT_NAME} PRIVATE ${PJ_CFLAGS})
+  target_include_directories(${PROJECT_NAME} PRIVATE ${PJ_INCLUDE_DIRS})
+  target_link_libraries(${PROJECT_NAME} ${PJ_LIB_FILES})
+
+  # pjproject Requires pthread
+  find_package(Threads REQUIRED)
+  target_link_libraries(${PROJECT_NAME} Threads::Threads)
+
+  # pjproject Requires UUID
+  pkg_check_modules(UUID REQUIRED uuid)
+  target_link_libraries(${PROJECT_NAME} ${UUID_LIBRARIES})
+  target_include_directories(${PROJECT_NAME} PRIVATE ${UUID_INCLUDE_DIRS})
+  target_compile_options(${PROJECT_NAME} PRIVATE ${UUID_CFLAGS})
+  target_link_directories(${PROJECT_NAME} PRIVATE ${UUID_LIBRARY_DIRS})
+  target_link_options(${PROJECT_NAME} PRIVATE ${UUID_LDFLAGS})
+
+  # openssl
+  if (${WITH_OPENSSL})
+    # openssl-libssl
+    pkg_check_modules(LIBSSL REQUIRED libssl)
+    target_link_libraries(${PROJECT_NAME} ${LIBSSL_LIBRARIES})
+    target_include_directories(${PROJECT_NAME} PRIVATE ${LIBSSL_INCLUDE_DIRS})
+    target_compile_options(${PROJECT_NAME} PRIVATE ${LIBSSL_CFLAGS})
+    target_link_directories(${PROJECT_NAME} PRIVATE ${LIBSSL_LIBRARY_DIRS})
+    target_link_options(${PROJECT_NAME} PRIVATE ${LIBSSL_LDFLAGS})
+    # openssl-libcrypto
+    pkg_check_modules(LIBCRYPTO REQUIRED libcrypto)
+    target_link_libraries(${PROJECT_NAME} ${LIBCRYPTO_LIBRARIES})
+    target_include_directories(${PROJECT_NAME} PRIVATE ${LIBCRYPTO_INCLUDE_DIRS})
+    target_compile_options(${PROJECT_NAME} PRIVATE ${LIBCRYPTO_CFLAGS})
+    target_link_directories(${PROJECT_NAME} PRIVATE ${LIBCRYPTO_LIBRARY_DIRS})
+    target_link_options(${PROJECT_NAME} PRIVATE ${LIBCRYPTO_LDFLAGS})
+  endif ()
+
+  # g729
+  if (${WITH_G729})
+    pkg_check_modules(LIBBCG729 REQUIRED libbcg729)
+    if (${WITH_G729_STATIC})
+    target_link_libraries(${PROJECT_NAME} ${LIBBCG729_LIBRARIES}.a)
+    else()
+      target_link_libraries(${PROJECT_NAME} ${LIBBCG729_LIBRARIES})
+    endif()
+    target_include_directories(${PROJECT_NAME} PRIVATE ${LIBBCG729_INCLUDE_DIRS})
+    target_compile_options(${PROJECT_NAME} PRIVATE ${LIBBCG729_CFLAGS})
+    target_link_directories(${PROJECT_NAME} PRIVATE ${LIBBCG729_LIBRARY_DIRS})
+    target_link_options(${PROJECT_NAME} PRIVATE ${LIBBCG729_LDFLAGS})
+  endif()
+
+  # opus
+  if (${WITH_OPUS})
+    pkg_check_modules(OPUS REQUIRED opus)
+    target_link_libraries(${PROJECT_NAME} ${OPUS_LIBRARIES})
+    target_include_directories(${PROJECT_NAME} PRIVATE ${OPUS_INCLUDE_DIRS})
+    target_compile_options(${PROJECT_NAME} PRIVATE ${OPUS_CFLAGS})
+    target_link_directories(${PROJECT_NAME} PRIVATE ${OPUS_LIBRARY_DIRS})
+    target_link_options(${PROJECT_NAME} PRIVATE ${OPUS_LDFLAGS})
+  endif()
 
 else ()
 
-  # 动态链接，需要安装到操作系统，提供 pc
-  pkg_check_modules(PJPROJECT REQUIRED libpjproject)
-  target_link_libraries(${PROJECT_NAME} ${PJPROJECT_LIBRARIES})
-  target_include_directories(${PROJECT_NAME} PRIVATE ${PJPROJECT_INCLUDE_DIRS})
-  target_compile_options(${PROJECT_NAME} PRIVATE ${PJPROJECT_CFLAGS})
-  target_link_directories(${PROJECT_NAME} PRIVATE ${PJPROJECT_LIBRARY_DIRS})
-  target_link_options(${PROJECT_NAME} PRIVATE ${PJPROJECT_LDFLAGS_OTHER})
+  # 动态链接 PJ，需要把它安装到操作系统，提供 pc
+  pkg_check_modules(LIBPJPROJECT REQUIRED libpjproject)
+  target_link_libraries(${PROJECT_NAME} ${LIBPJPROJECT_LIBRARIES})
+  target_include_directories(${PROJECT_NAME} PRIVATE ${LIBPJPROJECT_INCLUDE_DIRS})
+  target_compile_options(${PROJECT_NAME} PRIVATE ${LIBPJPROJECT_CFLAGS})
+  target_link_directories(${PROJECT_NAME} PRIVATE ${LIBPJPROJECT_LIBRARY_DIRS})
+  target_link_options(${PROJECT_NAME} PRIVATE ${LIBPJPROJECT_LDFLAGS})
 
 endif()
 
@@ -160,30 +224,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${SAMPLERATE_INCLUDE_DIRS})
 target_compile_options(${PROJECT_NAME} PRIVATE ${SAMPLERATE_CFLAGS})
 target_link_directories(${PROJECT_NAME} PRIVATE ${SAMPLERATE_LIBRARY_DIRS})
 target_link_options(${PROJECT_NAME} PRIVATE ${SAMPLERATE_LDFLAGS})
-
-# g729
-if (${WITH_G729})
-  pkg_check_modules(LIBBCG729 REQUIRED libbcg729)
-  if (${WITH_G729_STATIC})
-   target_link_libraries(${PROJECT_NAME} ${LIBBCG729_LIBRARIES}.a)
-  else()
-    target_link_libraries(${PROJECT_NAME} ${LIBBCG729_LIBRARIES})
-  endif()
-  target_include_directories(${PROJECT_NAME} PRIVATE ${LIBBCG729_INCLUDE_DIRS})
-  target_compile_options(${PROJECT_NAME} PRIVATE ${LIBBCG729_CFLAGS})
-  target_link_directories(${PROJECT_NAME} PRIVATE ${LIBBCG729_LIBRARY_DIRS})
-  target_link_options(${PROJECT_NAME} PRIVATE ${LIBBCG729_LDFLAGS})
-endif()
-
-# opus
-if (${WITH_OPUS})
-  pkg_check_modules(OPUS REQUIRED opus)
-  target_link_libraries(${PROJECT_NAME} ${OPUS_LIBRARIES})
-  target_include_directories(${PROJECT_NAME} PRIVATE ${OPUS_INCLUDE_DIRS})
-  target_compile_options(${PROJECT_NAME} PRIVATE ${OPUS_CFLAGS})
-  target_link_directories(${PROJECT_NAME} PRIVATE ${OPUS_LIBRARY_DIRS})
-  target_link_options(${PROJECT_NAME} PRIVATE ${OPUS_LDFLAGS})
-endif()
 
 # dependency of this project: gflags
 pkg_check_modules(GFLAGS REQUIRED gflags)
