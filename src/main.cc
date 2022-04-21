@@ -8,9 +8,9 @@
 #include <iostream>
 #include <pjsua2.hpp>
 
-#include "SipXAccount.hxx"
-#include "SipXCall.hxx"
-#include "global.hxx"
+#include "SipXAccount.hh"
+#include "SipXCall.hh"
+#include "global.hh"
 
 using namespace std;
 using namespace sipxsua;

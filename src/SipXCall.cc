@@ -3,8 +3,8 @@
 
 #include <pjmedia/mem_port.h>
 
-#include "SipXCall.hxx"
-#include "global.hxx"
+#include "SipXCall.hh"
+#include "global.hh"
 
 namespace sipxsua {
 

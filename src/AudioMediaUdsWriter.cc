@@ -1,4 +1,4 @@
-#include "AudioMediaUdsWriter.hxx"
+#include "AudioMediaUdsWriter.hh"
 
 #include <assert.h>
 #include <errno.h>

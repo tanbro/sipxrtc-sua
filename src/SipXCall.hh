@@ -7,8 +7,8 @@
 #include <pjmedia.h>
 #include <pjsua2.hpp>
 
-#include "AudioMediaUdsReader.hxx"
-#include "AudioMediaUdsWriter.hxx"
+#include "AudioMediaUdsReader.hh"
+#include "AudioMediaUdsWriter.hh"
 
 namespace sipxsua {
 

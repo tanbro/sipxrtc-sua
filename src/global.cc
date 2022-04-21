@@ -1,4 +1,4 @@
-#include "global.hxx"
+#include "global.hh"
 
 namespace sipxsua {
 

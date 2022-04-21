@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "SipXAccount.hxx"
-#include "SipXCall.hxx"
+#include "SipXAccount.hh"
+#include "SipXCall.hh"
 
 namespace sipxsua {
 

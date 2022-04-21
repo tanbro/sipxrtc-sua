@@ -34,12 +34,12 @@ string(TOLOWER ${CMAKE_CXX_COMPILER_ID} CXX_COMPILER_ID_LOWERCASE)
 set(SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/src)
 # 源文件列表
 set (SOURCES
-  ${SRC_DIR}/main.cxx
-  ${SRC_DIR}/global.cxx
-  ${SRC_DIR}/SipXAccount.cxx
-  ${SRC_DIR}/SipXCall.cxx
-  ${SRC_DIR}/AudioMediaUdsWriter.cxx
-  ${SRC_DIR}/AudioMediaUdsReader.cxx
+  ${SRC_DIR}/main.cc
+  ${SRC_DIR}/global.cc
+  ${SRC_DIR}/SipXAccount.cc
+  ${SRC_DIR}/SipXCall.cc
+  ${SRC_DIR}/AudioMediaUdsWriter.cc
+  ${SRC_DIR}/AudioMediaUdsReader.cc
 )
 
 # 加构建目标: 可执行
