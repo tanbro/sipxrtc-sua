@@ -6,7 +6,11 @@
 #include <unistd.h>
 
 #include <iostream>
+
 #include <pjsua2.hpp>
+
+#include <gflags/gflags.h>
+#include <glog/logging.h>
 
 #include "SipXAccount.hh"
 #include "SipXCall.hh"
@@ -20,13 +24,21 @@ static bool running = true;
 void sig_int_handler(int dummy) { running = false; }
 
 int main(int argc, char *argv[]) {
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
+  google::InitGoogleLogging(argv[0]);
+
+  LOG(INFO) << "Staring";
+
   ep.libCreate();
 
   // Initialize endpoint
   pj::EpConfig ep_cfg;
-  ep_cfg.logConfig.level = 6;
-  ep_cfg.uaConfig.threadCnt = 4;
-  ep_cfg.medConfig.threadCnt = 4;
+  // ep_cfg.uaConfig.threadCnt = 4;
+  // ep_cfg.medConfig.threadCnt = 4;
+  // ep_cfg.logConfig.consoleLevel = 5;
+  // ep_cfg.logConfig.level = 4;
+  // ep_cfg.logConfig.filename = "sua.log";
+  // ep_cfg.logConfig.writer = &suaLogWriter;
   ep.libInit(ep_cfg);
 
   auto codecs = ep.codecEnum2();
@@ -34,7 +46,7 @@ int main(int argc, char *argv[]) {
     return a.priority > b.priority;
   });
   for (auto it = codecs.begin(); it < codecs.end(); ++it) {
-    PJ_LOG(3, ("main", "codec[%d] %s", it->priority, it->codecId.c_str()));
+    VLOG(1) << "codec [" << (unsigned)it->priority << "] " << it->codecId;
   }
 
   // Create SIP transport. Error handling sample is shown

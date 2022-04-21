@@ -4,4 +4,6 @@ namespace sipxsua {
 
 pj::Endpoint ep;
 
+SuaLogWriter suaLogWriter;
+
 }
