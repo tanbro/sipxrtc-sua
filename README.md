@@ -42,19 +42,19 @@ configure 的时候，指定 `--disable-sound` 参数让 `pjproject` 使用“�
    sudo apt install build-essential
    ```
 
-2. 安装项目构建工具
+1. 安装项目构建工具
 
    ```bash
    sudo apt install cmake
    ```
 
-3. 如果尚未从远端获取 submodule 代码, 应进行一次初始化更新:
+1. 如果尚未从远端获取 submodule 代码, 应进行一次初始化更新:
 
    ```bash
    git submodules foreach update --init
    ```
 
-4. 构建和安装 `bcg729`
+1. 构建和安装 `bcg729`
 
    由于 G.729 在 CTI 领域十分重要，我们认为这是一个**必选项**。
 
@@ -75,7 +75,7 @@ configure 的时候，指定 `--disable-sound` 参数让 `pjproject` 使用“�
    sudo make install
    ```
 
-5. 构建和安装 `pjproject`
+1. 构建和安装 `pjproject`
 
    1. 安装 `pjproject` 的开发依赖包:
 
@@ -90,11 +90,11 @@ configure 的时候，指定 `--disable-sound` 参数让 `pjproject` 使用“�
          > - 如需使用 srtp, SIP over TLS 等网络安全特性，则安装 `libssl-dev`；否则不用。
          > - 如需使用 `opus` 音频编码，则安装 `libopus-dev`；否则不用。
 
-      2. 需要通过源代码安装的:
+      1. 需要通过源代码安装的:
 
          - `bcg729`: 在之前的步骤中已经安装
 
-   2. 编译 `pjproject`
+   1. 编译 `pjproject`
 
       检出到最近的发布版(目前是 2.12)
 
@@ -119,7 +119,7 @@ configure 的时候，指定 `--disable-sound` 参数让 `pjproject` 使用“�
 
       本项目默认使用 `submodules/pjproject` 子目录的的相对路径静态链接 `pjproject`，故不必安装到系统。
 
-6. 构建该项目(`sipxsua` 执行文件)
+1. 构建该项目(`sipxsua` 执行文件)
 
    1. 安装其依赖开发包:
 
@@ -129,7 +129,7 @@ configure 的时候，指定 `--disable-sound` 参数让 `pjproject` 使用“�
          sudo apt install libsamplerate0-dev libgoogle-glog-dev
          ```
 
-   2. 使用 CMake 构建
+   1. 使用 CMake 构建
 
       应单独建立一个名为 `build` 的目录，专用于构建:
 
