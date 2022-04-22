@@ -21,6 +21,12 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(
+  VERSION_BY_GIT
+  "Defein a `__PROJECT_VERSION__` macro by `git-describe`"
+  ON
+)
+
+option(
   WITH_PJ_STATIC
   "Link to libpjproject's shared/dynamic objects, which requires a configure with `--enable-shared`  and `sudo make install`"
   ON
@@ -48,6 +54,16 @@ option(
   "Whether to use libopus. When static link pjproject, and the audio codec is enabled in it, the option must be \"ON\" here!"
   ON
 )
+
+if (${VERSION_BY_GIT})
+  execute_process (
+    COMMAND git describe
+    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+    RESULT_VARIABLE GIT_DESCRIBE_RESULT
+    OUTPUT_VARIABLE GIT_DESCRIBE_OUTPUT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+endif ()
 
 # 项目：这个执行文件
 project(sipxsua)
@@ -79,6 +95,12 @@ target_include_directories(${PROJECT_NAME}
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include/public
 )
 
+if (GIT_DESCRIBE_OUTPUT)
+  target_compile_definitions(${PROJECT_NAME}
+    PRIVATE -D__PROJECT_VERSION__="${GIT_DESCRIBE_OUTPUT}"
+  )
+endif ()
+
 # output dir, name, rpath, ...
 set(OUTDIR ${CMAKE_CURRENT_LIST_DIR}/out/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_CXX_COMPILER_ID}/${CMAKE_BUILD_TYPE})
 set_target_properties(${PROJECT_NAME}
@@ -91,16 +113,17 @@ set_target_properties(${PROJECT_NAME}
 
 # libpjproject
 if (${WITH_PJ_STATIC})
+  message("Static link pjproject!")
   # libpjproject ， 使用本地 submodules/pjproject 中的静态库
   if (PJDIR)
-    message(STATUS "PJDIR was set explicitly: \"${PJDIR}\"")
+    message("PJDIR was set explicitly: \"${PJDIR}\"")
   else ()
     if (DEFINED ENV{PJDIR})
       set(PJDIR $ENV{PJDIR})
-      message(STATUS "PJDIR was set from environment: \"${PJDIR}\"")
+      message("PJDIR was set from environment: \"${PJDIR}\"")
     else ()
       set(PJDIR ${CMAKE_CURRENT_LIST_DIR}/submodules/pjproject)
-      message(STATUS "use default PJDIR: \"${PJDIR}\"")
+      message("Use default PJDIR: \"${PJDIR}\"")
     endif ()
   endif()
 
@@ -194,11 +217,11 @@ if (${WITH_PJ_STATIC})
       target_link_libraries(${PROJECT_NAME} ${LIBBCG729_LIBRARIES}.a)
     else()
       target_link_libraries(${PROJECT_NAME} ${LIBBCG729_LIBRARIES})
+      target_include_directories(${PROJECT_NAME} PRIVATE ${LIBBCG729_INCLUDE_DIRS})
+      target_compile_options(${PROJECT_NAME} PRIVATE ${LIBBCG729_CFLAGS})
+      target_link_directories(${PROJECT_NAME} PRIVATE ${LIBBCG729_LIBRARY_DIRS})
+      target_link_options(${PROJECT_NAME} PRIVATE ${LIBBCG729_LDFLAGS})
     endif()
-    target_include_directories(${PROJECT_NAME} PRIVATE ${LIBBCG729_INCLUDE_DIRS})
-    target_compile_options(${PROJECT_NAME} PRIVATE ${LIBBCG729_CFLAGS})
-    target_link_directories(${PROJECT_NAME} PRIVATE ${LIBBCG729_LIBRARY_DIRS})
-    target_link_options(${PROJECT_NAME} PRIVATE ${LIBBCG729_LDFLAGS})
   endif()
 
   # opus
