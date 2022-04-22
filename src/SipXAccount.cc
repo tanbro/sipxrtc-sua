@@ -1,25 +1,39 @@
+#include "SipXAccount.hh"
+
 #include <iostream>
 
-#include "SipXAccount.hh"
+#include <glog/logging.h>
+
 #include "SipXCall.hh"
 
 namespace sipxsua {
 
-SipXAccount::~SipXAccount() {
-  shutdown();
-}
+SipXAccount::~SipXAccount() { shutdown(); }
 
 void SipXAccount::onRegState(pj::OnRegStateParam &prm) {
-  pj::AccountInfo ai = getInfo();
-  std::cout << (ai.regIsActive ? "*** Register:" : "*** Unregister:")
-            << " code=" << prm.code << std::endl;
+  auto ai = getInfo();
+  LOG(INFO) << "[" << ai.id << "] onRegState\n"
+            << "  regIsActive=" << ai.regIsActive << "\n"
+            << "  code:" << prm.code << "\n"
+            << "  regStatus:" << ai.regStatus << " " << ai.regStatusText;
 }
 
 void SipXAccount::onIncomingCall(pj::OnIncomingCallParam &iprm) {
 
   pj::Call *call = new SipXCall(*this, iprm.callId);
+
+  auto ai = getInfo();
+  auto ci = call->getInfo();
+
   pj::CallOpParam prm;
   prm.statusCode = PJSIP_SC_OK;
+
+  LOG(INFO) << "[" << ai.id << "] onIncomingCall"
+            << " "
+            << "(" << ci.id << "/" << ci.callIdString << "):"
+            << " " << ci.remoteUri << " --> " << ci.localUri << " "
+            << "answer " << prm.statusCode;
+
   call->answer(prm);
 }
 

@@ -16,6 +16,8 @@
 #include <pjmedia.h>
 #include <pjsua2.hpp>
 
+#include <glog/logging.h>
+
 #define THIS_FILE "AudioMediaUdsReader.cxx"
 
 using namespace std;
@@ -28,6 +30,7 @@ AudioMediaUdsReader::AudioMediaUdsReader() : AudioMedia() {
   pj_caching_pool_init(&cachingPool, NULL, 0);
   pool = pj_pool_create(&cachingPool.factory, "AudioMediaUdsReader", 8192, 8192,
                         NULL);
+  CHECK_NOTNULL(pool);
 }
 
 AudioMediaUdsReader::~AudioMediaUdsReader() {
@@ -39,7 +42,7 @@ AudioMediaUdsReader::~AudioMediaUdsReader() {
     unregisterMediaPort();
   }
   if (sockfd != 0) {
-    close(sockfd);
+    PCHECK(close(sockfd));
   }
   if (NULL != src_state) {
     src_delete(src_state);
@@ -52,12 +55,12 @@ void AudioMediaUdsReader::createPlayer(const pj::MediaFormatAudio &audioFormat,
                                        const std::string &path,
                                        unsigned sampleRate,
                                        unsigned bufferMSec) {
-  assert(id == PJSUA_INVALID_ID); // 不允许重复创建！！！
+  CHECK_EQ(id, PJSUA_INVALID_ID) << ":不允许重复创建 player";
 
   // 只支持 Mono channel
-  assert(audioFormat.channelCount == 1);
+  CHECK_EQ(1, audioFormat.channelCount) << "仅支持 mono audio";
   // 只支持 16bits sampling
-  assert(audioFormat.bitsPerSample == 16);
+  CHECK_EQ(16, audioFormat.bitsPerSample) << "仅支持 16bits sampling";
 
   this->audioFormat = audioFormat;
   this->sampleRate = sampleRate;
@@ -106,17 +109,14 @@ void AudioMediaUdsReader::createPlayer(const pj::MediaFormatAudio &audioFormat,
   }
 
   // 建立内存播放 Audio Port
-  PJ_LOG(3, ("AudioMediaUdsReader", "RECV buffer_size=%d", buffer_size));
-  PJ_LOG(3,
-         ("AudioMediaUdsReader", "RECV clock_rate=%d", audioFormat.clockRate));
-  PJ_LOG(3, ("AudioMediaUdsReader", "RECV channel_count=%d",
-             audioFormat.channelCount));
-  PJ_LOG(3, ("AudioMediaUdsReader", "RECV samples_per_frame=%d",
-             samples_per_frame));
-  PJ_LOG(3, ("AudioMediaUdsReader", "RECV bits_per_sample=%d",
-             audioFormat.bitsPerSample));
   memset(buffer0, 0, sizeof(buffer0));
   memset(buffer, 0, buffer_size);
+  DVLOG(2) << "createPlayer() ... "
+           << "\n  buffer_size=" << buffer_size << ", "
+           << "\n  sample_rate=" << audioFormat.clockRate << ", "
+           << "\n  channel=" << audioFormat.channelCount << ", "
+           << "\n  samples_per_frame=" << samples_per_frame << ", "
+           << "\n  bits_per_sample=" << audioFormat.bitsPerSample;
   PJSUA2_CHECK_EXPR(pjmedia_mem_player_create(
       pool, buffer, buffer_size, audioFormat.clockRate,
       audioFormat.channelCount, samples_per_frame, audioFormat.bitsPerSample, 0,
@@ -127,18 +127,20 @@ void AudioMediaUdsReader::createPlayer(const pj::MediaFormatAudio &audioFormat,
   // 如果上面一步失败，就不会产生有效的 media id.
   // C++ way： 把 Port 加入到 conf，并接收新的 port id 到这个类的 id 属性
   registerMediaPort2(port, pool);
-  PJ_LOG(3, ("AudioMediaUdsReader", "id=%d", id));
+  DVLOG(2) << "createPlayer() ... id=" << id;
 
   // 启动接收线程（先来个死循环试试）
-  PJ_LOG(3, ("AudioMediaUdsReader", "Reader worker thread starting ..."));
+  DVLOG(3) << "createPlayer() ... Reader worker thread starting ...";
+  /// FIXME: 这里有死锁！
   {
     mutex mtx;
     condition_variable cv;
     unique_lock<mutex> lk(mtx);
-    read_thread = thread(&AudioMediaUdsReader::read_worker, this, ref(cv));
+    read_thread =
+        thread(&AudioMediaUdsReader::read_worker, this, ref(mtx), ref(cv));
     cv.wait(lk);
   }
-  PJ_LOG(3, ("AudioMediaUdsReader", "Reader worker thread started."));
+  DVLOG(3) << "createPlayer() ... Reader worker thread started.";
 }
 
 void AudioMediaUdsReader::onBufferEof() {
@@ -147,8 +149,10 @@ void AudioMediaUdsReader::onBufferEof() {
   memset(buffer0, 0, sizeof(buffer0));
 }
 
-void AudioMediaUdsReader::read_worker(std::condition_variable &cvStart) {
-  cvStart.notify_all();
+void AudioMediaUdsReader::read_worker(std::mutex &mtx,
+                                      std::condition_variable &cv) {
+  { lock_guard<mutex> lk(mtx); }
+  cv.notify_all();
   uint8_t buf_tmp[1920];
   ssize_t length;
   for (;;) {
@@ -156,11 +160,7 @@ void AudioMediaUdsReader::read_worker(std::condition_variable &cvStart) {
     // cout << THIS_FILE " read_worker:  " << length << "bytes received." <<
     // endl;
     if (length == -1) {
-      ostringstream oss;
-      oss << THIS_FILE " socket recv error (" << errno
-          << "): " << strerror(errno);
-      cerr << oss.str() << endl;
-      throw new runtime_error(oss.str());
+      PCHECK(errno) << ": recv() error in read_worker()";
     }
     // TRTC SDK 一定是 1920
     assert(length == 1920);

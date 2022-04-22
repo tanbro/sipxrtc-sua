@@ -141,19 +141,19 @@ int main(int argc, char *argv[]) {
   aud_dev_mgr.setNullDev();
   CHECK_EQ(0, aud_dev_mgr.getDevCount()) << "audDevManager::setNullDev() 失败";
 
-  cout << "输入要呼叫的 SIP URI:" << endl;
-  getline(cin, line);
-  if (!line.empty()) {
-    pj::Call *call = new SipXCall(sipAcc);
-    pj::CallOpParam prm(true); // Use default call settings
-    try {
-      call->makeCall(line, prm);
-    } catch (pj::Error &err) {
-      cout << err.info() << endl;
-      LOG(ERROR) << "makeCall 失败: (" << err.status << " " << err.reason
-                 << ") " << err.info();
-    }
-  }
+  // cout << "输入要呼叫的 SIP URI:" << endl;
+  // getline(cin, line);
+  // if (!line.empty()) {
+  //   pj::Call *call = new SipXCall(sipAcc);
+  //   pj::CallOpParam prm(true); // Use default call settings
+  //   try {
+  //     call->makeCall(line, prm);
+  //   } catch (pj::Error &err) {
+  //     cout << err.info() << endl;
+  //     LOG(ERROR) << "makeCall 失败: (" << err.status << " " << err.reason
+  //                << ") " << err.info();
+  //   }
+  // }
 
   //////////////
   printf("ctrl-c 退出\n");

@@ -62,7 +62,7 @@ private:
 
   std::thread read_thread;
   std::mutex read_mutext;
-  void read_worker(std::condition_variable &cvStart);
+  void read_worker(std::mutex &mtx, std::condition_variable &cv);
 };
 
 } // namespace sipxsua
