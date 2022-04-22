@@ -5,6 +5,10 @@
 
 namespace sipxsua {
 
+SipXAccount::~SipXAccount() {
+  shutdown();
+}
+
 void SipXAccount::onRegState(pj::OnRegStateParam &prm) {
   pj::AccountInfo ai = getInfo();
   std::cout << (ai.regIsActive ? "*** Register:" : "*** Unregister:")

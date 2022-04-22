@@ -83,6 +83,7 @@ set (SOURCES
   ${SRC_DIR}/AudioMediaUdsWriter.cc
   ${SRC_DIR}/AudioMediaUdsReader.cc
   ${SRC_DIR}/SuaLogWriter.cc
+  ${SRC_DIR}/version.cc
 )
 
 # 加构建目标: 可执行

@@ -8,6 +8,7 @@ namespace sipxsua {
 // Subclass to extend the Account and get notifications etc.
 class SipXAccount : public pj::Account {
 public:
+  ~SipXAccount();
   virtual void onRegState(pj::OnRegStateParam &);
   virtual void onIncomingCall(pj::OnIncomingCallParam &);
 };

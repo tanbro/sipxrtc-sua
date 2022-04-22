@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <iomanip>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,15 +7,18 @@
 #include <unistd.h>
 
 #include <iostream>
+#include <sstream>
 
 #include <pjsua2.hpp>
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
+#include "ArgsFlags.hh"
 #include "SipXAccount.hh"
 #include "SipXCall.hh"
 #include "global.hh"
+#include "version.hh"
 
 using namespace std;
 using namespace sipxsua;
@@ -24,74 +28,130 @@ static bool running = true;
 void sig_int_handler(int dummy) { running = false; }
 
 int main(int argc, char *argv[]) {
+  gflags::SetVersionString(getVersionString());
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);
 
-  LOG(INFO) << "Staring";
+  LOG(WARNING) << "\n"
+               << "================ startup ================\n"
+               << argv[0] << "\n"
+               << "  version: " << getVersionString() << "\n"
+               << "^^^^^^^^^^^^^^^^ startup ^^^^^^^^^^^^^^^^\n";
 
+  LOG(INFO) << "Create SIP library";
+  VLOG(1) << ">>> pj::Endpoint::libCreate()";
   ep.libCreate();
+  VLOG(1) << "<<< pj::Endpoint::libCreate()";
 
   // Initialize endpoint
-  pj::EpConfig ep_cfg;
-  // ep_cfg.uaConfig.threadCnt = 4;
-  // ep_cfg.medConfig.threadCnt = 4;
-  // ep_cfg.logConfig.consoleLevel = 5;
-  // ep_cfg.logConfig.level = 4;
-  // ep_cfg.logConfig.filename = "../../../../logs/sua.log";
-  // ep_cfg.logConfig.writer = &suaLogWriter;
-  ep.libInit(ep_cfg);
+  LOG(INFO) << "Initialize SIP endpoint";
+  {
+    pj::EpConfig cfg;
+    if (FLAGS_pj_log_level >= 0) {
+      cfg.logConfig.level = FLAGS_pj_log_level;
+    }
+    if (!FLAGS_pj_log_file.empty()) {
+      cfg.logConfig.filename = FLAGS_pj_log_file;
+    }
+    if (FLAGS_pj_log_console_level >= 0) {
+      cfg.logConfig.consoleLevel = FLAGS_pj_log_console_level;
+    }
+    VLOG(1) << ">>> pj::Endpoint::libInit()";
+    ep.libInit(cfg);
+    VLOG(1) << "<<< pj::Endpoint::libInit()";
+  }
 
-  auto codecs = ep.codecEnum2();
-  sort(codecs.begin(), codecs.end(), [](pj::CodecInfo a, pj::CodecInfo b) {
-    return a.priority > b.priority;
-  });
-  for (auto it = codecs.begin(); it < codecs.end(); ++it) {
-    DLOG(INFO) << "codec [" << (unsigned)it->priority << "] " << it->codecId;
+  if (FLAGS_list_pj_codecs) {
+    auto codecs = ep.codecEnum2();
+    sort(codecs.begin(), codecs.end(), [](pj::CodecInfo a, pj::CodecInfo b) {
+      return a.priority > b.priority;
+    });
+    cout << endl;
+    cout << "======== "
+         << "================ "
+         << "=================" << endl;
+    cout << "Priority "
+         << "Id               "
+         << "Description" << endl;
+    cout << "======== "
+         << "================ "
+         << "=================" << endl;
+    for (auto it = codecs.begin(); it < codecs.end(); ++it) {
+      cout << setw(8) << right << (unsigned)it->priority;
+      cout << " " << setw(16) << left << it->codecId;
+      cout << " " << it->desc;
+      cout << endl;
+    }
+    cout << "======== "
+         << "================ "
+         << "=================" << endl;
+    cout << endl;
+    return 0;
   }
 
   // Create SIP transport. Error handling sample is shown
-  try {
+  LOG(INFO) << "Create SIP transport";
+  {
     pj::TransportConfig cfg;
-    cfg.port = 5060;
-    ep.transportCreate(PJSIP_TRANSPORT_UDP, cfg);
-  } catch (pj::Error &err) {
-    cout << err.info() << endl;
-    return 1;
+    cfg.port = FLAGS_pj_sip_port;
+    if (cfg.port > 0) {
+      cfg.portRange = FLAGS_pj_sip_port_range;
+    }
+    VLOG(1) << ">>> pj::Endpoint::transportCreate("
+            << "boundAddress=\"" << cfg.boundAddress << "\", "
+            << "port=" << cfg.port << ",  "
+            << "portRange=" << cfg.portRange << ", "
+            << "publicAddress=\"" << cfg.publicAddress << "\""
+            << ")";
+    pj::TransportId tid;
+    CHECK_LE(0, (tid = ep.transportCreate(PJSIP_TRANSPORT_UDP, cfg)))
+        << "<<< pj::Endpoint::transportCreate() failed";
+    {
+      auto ti = ep.transportGetInfo(tid);
+      VLOG(1) << "<<< pj::Endpoint::transportCreate() succeed: " << ti.info;
+    }
   }
 
   // Start the library (worker threads etc)
+  LOG(INFO) << "Start SIP library";
+  VLOG(1) << ">>> pj::Endpoint::libStart()";
   ep.libStart();
+  VLOG(1) << "<<< pj::Endpoint::libStart()";
 
   string line;
 
-  SipXAccount *acc = nullptr;
+  LOG(INFO) << "Create default local SIP account";
   {
     // 本地账户
-    pj::AccountConfig acc_cfg;
-    acc_cfg.idUri = "sip:0.0.0.0";
+    pj::AccountConfig cfg;
+    cfg.idUri = "sip:0.0.0.0";
+    cfg.mediaConfig.transportConfig.port = FLAGS_pj_rtp_port;
+    cfg.mediaConfig.transportConfig.portRange = FLAGS_pj_rtp_port_range;
+    cfg.mediaConfig.srtpUse = (pjmedia_srtp_use)FLAGS_pj_srtp_use;
     // acc_cfg.idUri = "sip:8007@192.168.2.202";
     // acc_cfg.regConfig.registrarUri = "sip:192.168.2.202";
     // acc_cfg.sipConfig.authCreds.push_back(
     //     pj::AuthCredInfo("digest", "*", "8007", 0, "hesong"));
     // Create the account
-    acc = new SipXAccount();
-    acc->create(acc_cfg, true);
+    sipAcc.create(cfg, true);
   }
 
   // 使用空设备
   pj::AudDevManager &aud_dev_mgr = ep.audDevManager();
   aud_dev_mgr.setNullDev();
-  assert(0 == aud_dev_mgr.getDevCount());
+  CHECK_EQ(0, aud_dev_mgr.getDevCount()) << "audDevManager::setNullDev() 失败";
 
   cout << "输入要呼叫的 SIP URI:" << endl;
   getline(cin, line);
   if (!line.empty()) {
-    pj::Call *call = new SipXCall(*acc);
+    pj::Call *call = new SipXCall(sipAcc);
     pj::CallOpParam prm(true); // Use default call settings
     try {
       call->makeCall(line, prm);
     } catch (pj::Error &err) {
       cout << err.info() << endl;
+      LOG(ERROR) << "makeCall 失败: (" << err.status << " " << err.reason
+                 << ") " << err.info();
     }
   }
 
@@ -104,9 +164,6 @@ int main(int argc, char *argv[]) {
   //////////////////
 
   // Delete the account. This will unregister from server
-  if (acc != nullptr) {
-    delete acc;
-  }
   ep.hangupAllCalls();
   ep.libDestroy();
 

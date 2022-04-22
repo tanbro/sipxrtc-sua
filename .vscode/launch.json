@@ -10,12 +10,16 @@
             "request": "launch",
             "program": "${workspaceFolder}/out/Linux-x86_64-GNU/Debug/bin/sipxsua",
             "args": [
-                "-v=1"
+                "-pj_sip_port=5060"
             ],
             "cwd": "${workspaceFolder}/out/Linux-x86_64-GNU/Debug/bin",
             "environment": [
                 {
                     "name": "GLOG_logtostderr",
+                    "value": "1"
+                },
+                {
+                    "name": "GLOG_v",
                     "value": "1"
                 }
             ],

@@ -3,11 +3,13 @@
 
 #include <pjsua2.hpp>
 
+#include <SipXAccount.hh>
 #include "SuaLogWriter.hh"
 
 namespace sipxsua {
 
 extern pj::Endpoint ep;
+extern SipXAccount sipAcc;
 
 extern SuaLogWriter suaLogWriter;
 
