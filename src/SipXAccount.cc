@@ -22,10 +22,12 @@ void SipXAccount::onRegState(pj::OnRegStateParam &prm) {
 
 void SipXAccount::onIncomingCall(pj::OnIncomingCallParam &iprm) {
 
-  pj::Call *call = new SipXCall(*this, iprm.callId);
+  auto call = make_shared<SipXCall>(*this, iprm.callId);
+  auto insRes = callMap.insert(make_pair<int, TCall>(getId(), call));
+  CHECK(insRes.second) << "重复的 Call ID " << getId();
 
-  auto ai = getInfo();
   auto ci = call->getInfo();
+  auto ai = getInfo();
 
   pj::CallOpParam prm;
   prm.statusCode = PJSIP_SC_OK;
@@ -37,6 +39,10 @@ void SipXAccount::onIncomingCall(pj::OnIncomingCallParam &iprm) {
             << "answer " << prm.statusCode;
 
   call->answer(prm);
+}
+
+void SipXAccount::removeCall(int callId) {
+  CHECK_LT(0, callMap.erase(callId));
 }
 
 } // namespace sipxsua

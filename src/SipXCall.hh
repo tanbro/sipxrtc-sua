@@ -27,6 +27,10 @@ private:
 
   AudioMediaUdsReader *reader = nullptr;
   AudioMediaUdsWriter *writer = nullptr;
+
+public:
+  AudioMediaUdsReader *getReader();
+  AudioMediaUdsWriter *getWriter();
 };
 
 } // namespace sipxsua

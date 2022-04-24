@@ -8,6 +8,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <sys/poll.h>
+
 #include <iostream>
 #include <sstream>
 

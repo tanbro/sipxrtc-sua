@@ -35,7 +35,7 @@ AudioMediaUdsWriter::~AudioMediaUdsWriter() {
     unregisterMediaPort();
   }
   if (sockfd != 0) {
-    PCHECK(close(sockfd));
+    CHECK_ERR(close(sockfd));
   }
   if (NULL != src_state) {
     src_delete(src_state);

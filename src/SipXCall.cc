@@ -6,7 +6,10 @@
 #include <glog/logging.h>
 #include <pjmedia/mem_port.h>
 
+#include "SipXAccount.hh"
 #include "global.hh"
+
+using namespace std;
 
 namespace sipxsua {
 
@@ -16,9 +19,15 @@ SipXCall::SipXCall(pj::Account &acc, int call_id) : Call(acc, call_id) {
   pj_caching_pool_init(&cachingPool, NULL, 0);
   pool = pj_pool_create(&cachingPool.factory, "SipXCall", 512, 512, NULL);
   CHECK_NOTNULL(pool);
+  int accId = acc.getId();
 }
 
 SipXCall::~SipXCall() {
+  auto ci = getInfo();
+  LOG(WARNING) << "[" << ci.accId << "]"
+               << " "
+               << "(" << ci.id << "/" << ci.callIdString << "): "
+               << "~ Destruct ... " << ci.state << " " << ci.stateText;
   if (reader != nullptr) {
     delete reader;
   }
@@ -34,11 +43,12 @@ void SipXCall::onCallState(pj::OnCallStateParam &prm) {
 
   LOG(INFO) << "[" << ci.accId << "]"
             << " "
-            << "(" << ci.id << "/" << ci.callIdString << "): " << ci.state
-            << " " << ci.stateText;
+            << "(" << ci.id << "/" << ci.callIdString << "): CallState ... "
+            << ci.state << " " << ci.stateText;
 
   if (ci.state == PJSIP_INV_STATE_DISCONNECTED) {
     /// TODO: Schedule/Dispatch call deletion to another thread here
+    sipAcc.removeCall(getId());
   }
 }
 
@@ -87,5 +97,9 @@ void SipXCall::onCallMediaState(pj::OnCallMediaStateParam &prm) {
   DVLOG(2) << "UDS Writer startTransmit";
   peerMedia.startTransmit(*writer);
 }
+
+AudioMediaUdsReader *SipXCall::getReader() { return reader; }
+
+AudioMediaUdsWriter *SipXCall::getWriter() { return writer; }
 
 } // namespace sipxsua

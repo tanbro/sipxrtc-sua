@@ -5,15 +5,9 @@
 
 #include <sys/un.h>
 
-#include <condition_variable>
-#include <mutex>
-#include <thread>
-
 #include <pjlib.h>
 #include <pjmedia.h>
 #include <pjsua2.hpp>
-
-#include <samplerate.h>
 
 namespace sipxsua {
 
@@ -28,6 +22,10 @@ public:
   void createPlayer(const pj::MediaFormatAudio &audioFormat,
                     const std::string &path, unsigned sampleRate,
                     unsigned bufferMSec = 100);
+
+  int getFd() { return sockfd; };
+
+  void runOnce();
 
 protected:
   /**
@@ -49,20 +47,12 @@ private:
   uint8_t *buffer;
   size_t buffer_size;
 
-  uint8_t buffer0[1920];
+  uint8_t recv_buffer[1920];
 
   static void cb_mem_play_eof(pjmedia_port *port, void *usr_data);
 
   pj_caching_pool cachingPool;
   pj_pool_t *pool;
-
-  SRC_STATE *src_state = NULL;
-  SRC_DATA src_data = {0};
-  short *resampled_short_array = NULL;
-
-  std::thread read_thread;
-  std::mutex read_mutext;
-  void read_worker(std::mutex &mtx, std::condition_variable &cv);
 };
 
 } // namespace sipxsua

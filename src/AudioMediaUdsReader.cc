@@ -35,17 +35,11 @@ AudioMediaUdsReader::AudioMediaUdsReader() : AudioMedia() {
 
 AudioMediaUdsReader::~AudioMediaUdsReader() {
   /// TODO: 死循环，退不出来的
-  if (read_thread.joinable()) {
-    read_thread.join();
-  }
   if (id != PJSUA_INVALID_ID) {
     unregisterMediaPort();
   }
-  if (sockfd != 0) {
-    PCHECK(close(sockfd));
-  }
-  if (NULL != src_state) {
-    src_delete(src_state);
+  if (sockfd >= 0) {
+    CHECK_ERR(close(sockfd));
   }
   pj_pool_release(pool);
   pj_caching_pool_destroy(&cachingPool);
@@ -75,7 +69,7 @@ void AudioMediaUdsReader::createPlayer(const pj::MediaFormatAudio &audioFormat,
                                    audioFormat.frameTimeUsec / 1000000;
 
   //分配缓冲区
-  assert(buffer_size == sizeof(buffer0));
+  assert(buffer_size == sizeof(recv_buffer));
   buffer = (uint8_t *)pj_pool_calloc(pool, buffer_size, sizeof(uint8_t));
 
   // 准备绑定文件
@@ -109,7 +103,7 @@ void AudioMediaUdsReader::createPlayer(const pj::MediaFormatAudio &audioFormat,
   }
 
   // 建立内存播放 Audio Port
-  memset(buffer0, 0, sizeof(buffer0));
+  memset(recv_buffer, 0, sizeof(recv_buffer));
   memset(buffer, 0, buffer_size);
   DVLOG(1) << "createPlayer() ... " << endl
            << "  buffer_size=" << buffer_size << ", " << endl
@@ -128,47 +122,23 @@ void AudioMediaUdsReader::createPlayer(const pj::MediaFormatAudio &audioFormat,
   // C++ way： 把 Port 加入到 conf，并接收新的 port id 到这个类的 id 属性
   registerMediaPort2(port, pool);
   DVLOG(1) << "createPlayer() ... id=" << id;
-
-  // 启动接收线程（先来个死循环试试）
-  DVLOG(3) << "createPlayer() ... Reader worker thread starting ...";
-  /// FIXME: 这里有死锁！
-  {
-    mutex mtx;
-    condition_variable cv;
-    unique_lock<mutex> lk(mtx);
-    read_thread =
-        thread(&AudioMediaUdsReader::read_worker, this, ref(mtx), ref(cv));
-    cv.wait(lk);
-  }
-  DVLOG(3) << "createPlayer() ... Reader worker thread started.";
 }
 
 void AudioMediaUdsReader::onBufferEof() {
-  lock_guard<mutex> lk(read_mutext);
-  memcpy(buffer, buffer0, sizeof(buffer0));
-  memset(buffer0, 0, sizeof(buffer0));
+  memcpy(buffer, recv_buffer, sizeof(recv_buffer));
+  memset(recv_buffer, 0, sizeof(recv_buffer));
 }
 
-void AudioMediaUdsReader::read_worker(std::mutex &mtx,
-                                      std::condition_variable &cv) {
-  { lock_guard<mutex> lk(mtx); }
-  cv.notify_all();
-  uint8_t buf_tmp[1920];
-  ssize_t length;
-  for (;;) {
-    length = recv(sockfd, buf_tmp, sizeof(buf_tmp), 0);
-    // cout << THIS_FILE " read_worker:  " << length << "bytes received." <<
-    // endl;
-    if (length == -1) {
-      PCHECK(errno) << ": recv() error in read_worker()";
+void AudioMediaUdsReader::runOnce() {
+  ssize_t n_bytes = recv(sockfd, recv_buffer, sizeof(recv_buffer), 0);
+  DVLOG(6) << "recv()->" << n_bytes;
+  if (n_bytes < 0) {
+    if (errno != EWOULDBLOCK) {
+      CHECK(errno) << ": recv() failed: ";
     }
-    // TRTC SDK 一定是 1920
-    assert(length == 1920);
-    {
-      lock_guard<mutex> lk(read_mutext);
-      memcpy(buffer0, buf_tmp, sizeof(buffer0));
-    }
+    return;
   }
+  CHECK_EQ(sizeof(recv_buffer), n_bytes);
 }
 
 void AudioMediaUdsReader::cb_mem_play_eof(pjmedia_port *port, void *usr_data) {
