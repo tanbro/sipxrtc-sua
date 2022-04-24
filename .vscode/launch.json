@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "[linux/x86_64/gcc] 启动 sipxsua",
+            "name": "[Linux-x86_64-GNU/Debug] 启动 sipxsua",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/out/Linux-x86_64-GNU/Debug/bin/sipxsua",
