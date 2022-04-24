@@ -11,7 +11,7 @@
             "program": "${workspaceFolder}/out/Linux-x86_64-GNU/Debug/bin/sipxsua",
             "args": [
                 "-logtostderr=1",
-                "-v=3",
+                "-v=6",
                 "-pj_sip_port=5060",
                 "-pj_log_console_level=0"
             ],

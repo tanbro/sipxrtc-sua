@@ -134,13 +134,11 @@ void AudioMediaUdsWriter::createRecorder(
 }
 
 void AudioMediaUdsWriter::onBufferEof() {
-  DVLOG(6) << "onBufferEof()";
   // 如果不用 resample，缓冲的数据可以直接发送
   uint8_t *send_buf = NULL;
   size_t send_sz = 0;
   // Resample?
   if (NULL != src_state) {
-    DVLOG(6) << "onBufferEof() ... resample";
     // 重采样！
     int src_errno;
     // The src_reset function resets the internal state of the sample rate
@@ -148,20 +146,22 @@ void AudioMediaUdsWriter::onBufferEof() {
     // using src_new. This should be called whenever a sample rate converter is
     // to be used on two separate, unrelated pieces of audio.
     src_errno = src_reset(src_state);
-    CHECK_EQ(0, src_errno) << ": src_reset() error in onBufferEof(). "
+    CHECK_EQ(0, src_errno) << ": src_reset() error: "
                            << src_strerror(src_errno);
 
-    // 原始16bit采样数据转float采样数据装载到输入缓冲
+    /// @see: http://www.mega-nerd.com/SRC/api_misc.html#SRC_DATA
+    // Resampler 重新计数
+    src_data.input_frames_used = 0;
+    src_data.output_frames_gen = 0;
+    // Resampler 原始16bit采样数据转float采样数据装载到输入缓冲
     src_short_to_float_array((const short *)buffer, (float *)src_data.data_in,
                              src_data.input_frames);
-    // 重采样处理：输入=>输出
-    do {
-      // ref: http://www.mega-nerd.com/SRC/api_misc.html#SRC_DATA
-      src_data.end_of_input = 0;
+    // Resampler process
+    while (src_data.output_frames_gen < src_data.output_frames) {
       src_errno = src_process(src_state, &src_data);
-      CHECK_EQ(0, src_errno) << ": src_process() error in onBufferEof(). "
-                             << src_strerror(src_errno);
-    } while (src_data.output_frames_gen < src_data.output_frames);
+      CHECK_EQ(0, src_errno)
+          << ": src_process() error: " << src_strerror(src_errno);
+    }
 
     // 分配结果数据缓冲区，并将输出float采样的缓冲数据该写成16Kbit采样的数据写入到结果缓冲
     src_float_to_short_array(src_data.data_out, resampled_short_array,
@@ -176,7 +176,7 @@ void AudioMediaUdsWriter::onBufferEof() {
   }
 
   CHECK_NOTNULL(buffer);
-  CHECK_LT(0, buffer_size) << ": 发送缓冲为0!";
+  CHECK_LT(0, buffer_size) << ": sendto buffer NULL";
 
   // 发送!
   ssize_t n_bytes =
@@ -189,7 +189,7 @@ void AudioMediaUdsWriter::onBufferEof() {
     case ECONNREFUSED:
       break;
     default:
-      PCHECK(errno) << ": sendto() error in createRecorder().";
+      PCHECK(errno) << ": sendto() error: ";
       break;
     }
   }

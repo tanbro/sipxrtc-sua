@@ -80,7 +80,7 @@ void SipXCall::onCallMediaState(pj::OnCallMediaStateParam &prm) {
     writer = nullptr;
   }
   writer = new AudioMediaUdsWriter();
-  writer->createRecorder(peerAuFmt, "/tmp/sipxrtp-sua.sock", 48000, 200);
+  writer->createRecorder(peerAuFmt, "/tmp/sipxrtp-sua.sock", 48000, 20);
 
   DVLOG(2) << "UDS Reader startTransmit";
   reader->startTransmit(peerMedia);
