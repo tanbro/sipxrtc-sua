@@ -1,6 +1,6 @@
 #include "SipXCall.hh"
 
-#include <iostream>
+#include <ostream>
 #include <sstream>
 
 #include <glog/logging.h>

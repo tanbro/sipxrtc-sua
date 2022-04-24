@@ -1,5 +1,7 @@
 #include <algorithm>
 #include <iomanip>
+#include <iostream>
+#include <ostream>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,11 +34,11 @@ int main(int argc, char *argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);
 
-  LOG(WARNING) << "\n"
-               << "================ startup ================\n"
-               << argv[0] << "\n"
-               << "  version: " << getVersionString() << "\n"
-               << "^^^^^^^^^^^^^^^^ startup ^^^^^^^^^^^^^^^^\n";
+  LOG(WARNING) << endl
+               << "================ startup ================" << endl
+               << argv[0] << endl
+               << "  version: " << getVersionString() << endl
+               << "^^^^^^^^^^^^^^^^ startup ^^^^^^^^^^^^^^^^" << endl;
 
   LOG(INFO) << "Create SIP library";
   VLOG(1) << ">>> pj::Endpoint::libCreate()";
@@ -61,7 +63,7 @@ int main(int argc, char *argv[]) {
     VLOG(1) << "<<< pj::Endpoint::libInit()";
   }
 
-  if (FLAGS_list_pj_codecs) {
+  if (FLAGS_pj_list_codecs) {
     auto codecs = ep.codecEnum2();
     sort(codecs.begin(), codecs.end(), [](pj::CodecInfo a, pj::CodecInfo b) {
       return a.priority > b.priority;

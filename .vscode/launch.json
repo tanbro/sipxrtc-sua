@@ -5,18 +5,25 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "启动 sipxsua (Debug/Linux-x86_64-GNU)",
+            "name": "[linux/x86_64/gcc] 启动 sipxsua",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/out/Linux-x86_64-GNU/Debug/bin/sipxsua",
             "args": [
-                "-logtostderr=1",
-                "-v=6",
                 "-pj_sip_port=5060",
                 "-pj_log_console_level=0"
             ],
             "cwd": "${workspaceFolder}/out/Linux-x86_64-GNU/Debug/bin",
-            "environment": [],
+            "environment": [
+                {
+                    "name": "GLOG_logtostderr",
+                    "value": "1"
+                },
+                {
+                    "name": "GLOG_v",
+                    "value": "3"
+                }
+            ],
             "externalConsole": false,
             "stopAtEntry": false,
             "MIMode": "gdb",

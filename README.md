@@ -88,7 +88,10 @@ configure 的时候，指定 `--disable-sound` 参数让 `pjproject` 使用“�
          > 说明:
          >
          > - 如需使用 srtp, SIP over TLS 等网络安全特性，则安装 `libssl-dev`；否则不用。
+         >
          > - 如需使用 `opus` 音频编码，则安装 `libopus-dev`；否则不用。
+         >
+         >   `opus` 是默认支持多 Channel Audio 的，而我们的 Mix 与 Resample 还没有为 multiple channels 做好准备，所以不建议使用！
 
       1. 需要通过源代码安装的:
 
@@ -150,3 +153,7 @@ configure 的时候，指定 `--disable-sound` 参数让 `pjproject` 使用“�
 ```bash
 sudo apt install libssl1.1 libuuid1 libopus0 libsamplerate0 libgoogle-glog0v5
 ```
+
+> 说明:
+>
+> `opus` 是默认支持多 Channel Audio 的，而我们的 Mix 与 Resample 还没有为 multiple channels 做好准备，所以不建议使用！

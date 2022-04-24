@@ -52,7 +52,7 @@ option(
 option(
   WITH_OPUS
   "Whether to use libopus. When static link pjproject, and the audio codec is enabled in it, the option must be \"ON\" here!"
-  ON
+  OFF
 )
 
 if (${VERSION_BY_GIT})

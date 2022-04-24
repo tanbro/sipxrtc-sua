@@ -1,10 +1,12 @@
 #include "SipXAccount.hh"
 
-#include <iostream>
+#include <ostream>
 
 #include <glog/logging.h>
 
 #include "SipXCall.hh"
+
+using namespace std;
 
 namespace sipxsua {
 
@@ -12,9 +14,9 @@ SipXAccount::~SipXAccount() { shutdown(); }
 
 void SipXAccount::onRegState(pj::OnRegStateParam &prm) {
   auto ai = getInfo();
-  LOG(INFO) << "[" << ai.id << "] onRegState\n"
-            << "  regIsActive=" << ai.regIsActive << "\n"
-            << "  code:" << prm.code << "\n"
+  LOG(INFO) << "[" << ai.id << "] onRegState" << endl
+            << "  regIsActive=" << ai.regIsActive << endl
+            << "  code:" << prm.code << endl
             << "  regStatus:" << ai.regStatus << " " << ai.regStatusText;
 }
 

@@ -1,5 +1,6 @@
 #include "version.hh"
 
+#include <ostream>
 #include <sstream>
 #include <string>
 
@@ -93,16 +94,18 @@
 #define ARCHITECTURE "UNKNOWN"
 #endif
 
+using namespace std;
+
 namespace sipxsua {
 
-std::string versionString;
+string versionString;
 
-const std::string &getVersionString() {
+const string &getVersionString() {
   if (!versionString.empty()) {
     return versionString;
   }
 
-  std::ostringstream oss;
+  ostringstream oss;
 
   oss << "git-"
 #ifdef __PROJECT_VERSION__
@@ -114,23 +117,25 @@ const std::string &getVersionString() {
 
       << PLATFORM << "/" << ARCHITECTURE
 
-      << "\n\n"
+      << endl
+      << endl
       << "  compiler:"
 #ifdef __GNUC__
-      << "\n"
+      << endl
       << "    gcc " << __VERSION__
 #else
       << "    unknown"
 #endif
 
-      << "\n\n"
-      << "  with:"
-      << "\n"
-      << "    pjsip " << PJ_VERSION << "\n"
+      << endl
+      << endl
+      << "  with:" << endl
+      << "    pjsip " << PJ_VERSION << endl
       << "    " << src_get_version()
 
-      << "\n\n"
-      << "  build: " << __TIME__ << " " << __DATE__ << "\n";
+      << endl
+      << endl
+      << "  build: " << __TIME__ << " " << __DATE__ << endl;
 
   versionString = oss.str();
   return versionString;

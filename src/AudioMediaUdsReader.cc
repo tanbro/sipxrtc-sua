@@ -111,12 +111,12 @@ void AudioMediaUdsReader::createPlayer(const pj::MediaFormatAudio &audioFormat,
   // 建立内存播放 Audio Port
   memset(buffer0, 0, sizeof(buffer0));
   memset(buffer, 0, buffer_size);
-  DVLOG(2) << "createPlayer() ... "
-           << "\n  buffer_size=" << buffer_size << ", "
-           << "\n  sample_rate=" << audioFormat.clockRate << ", "
-           << "\n  channel=" << audioFormat.channelCount << ", "
-           << "\n  samples_per_frame=" << samples_per_frame << ", "
-           << "\n  bits_per_sample=" << audioFormat.bitsPerSample;
+  DVLOG(1) << "createPlayer() ... " << endl
+           << "  buffer_size=" << buffer_size << ", " << endl
+           << "  sample_rate=" << audioFormat.clockRate << ", " << endl
+           << "  channel=" << audioFormat.channelCount << ", " << endl
+           << "  samples_per_frame=" << samples_per_frame << ", " << endl
+           << "  bits_per_sample=" << audioFormat.bitsPerSample;
   PJSUA2_CHECK_EXPR(pjmedia_mem_player_create(
       pool, buffer, buffer_size, audioFormat.clockRate,
       audioFormat.channelCount, samples_per_frame, audioFormat.bitsPerSample, 0,
@@ -127,7 +127,7 @@ void AudioMediaUdsReader::createPlayer(const pj::MediaFormatAudio &audioFormat,
   // 如果上面一步失败，就不会产生有效的 media id.
   // C++ way： 把 Port 加入到 conf，并接收新的 port id 到这个类的 id 属性
   registerMediaPort2(port, pool);
-  DVLOG(2) << "createPlayer() ... id=" << id;
+  DVLOG(1) << "createPlayer() ... id=" << id;
 
   // 启动接收线程（先来个死循环试试）
   DVLOG(3) << "createPlayer() ... Reader worker thread starting ...";
