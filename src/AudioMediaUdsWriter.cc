@@ -20,6 +20,7 @@ AudioMediaUdsWriter::AudioMediaUdsWriter() : AudioMedia() {
 }
 
 AudioMediaUdsWriter::~AudioMediaUdsWriter() {
+  LOG(INFO) << "~dtor";
   if (id != PJSUA_INVALID_ID) {
     unregisterMediaPort();
   }
@@ -27,7 +28,10 @@ AudioMediaUdsWriter::~AudioMediaUdsWriter() {
     CHECK_ERR(close(sockfd));
   }
   if (NULL != src_state) {
-    src_delete(src_state);
+    src_state = src_delete(src_state);
+    if (src_state) {
+      LOG(FATAL) << ": src_delete() failed";
+    }
   }
   pj_pool_release(pool);
   pj_caching_pool_destroy(&cachingPool);
@@ -111,7 +115,8 @@ void AudioMediaUdsWriter::createRecorder(
            << "  sample_rate=" << audioFormat.clockRate << ", " << endl
            << "  channel=" << audioFormat.channelCount << ", " << endl
            << "  samples_per_frame=" << samples_per_frame << ", " << endl
-           << "  bits_per_sample=" << audioFormat.bitsPerSample;
+           << "  bits_per_sample=" << audioFormat.bitsPerSample << ", " << endl
+           << "  resample_ration=" << samples_per_frame << src_data.src_ratio;
   PJSUA2_CHECK_EXPR(pjmedia_mem_capture_create(
       pool, buffer, buffer_size, audioFormat.clockRate,
       audioFormat.channelCount, samples_per_frame, audioFormat.bitsPerSample, 0,
@@ -126,6 +131,7 @@ void AudioMediaUdsWriter::createRecorder(
 }
 
 void AudioMediaUdsWriter::onBufferEof() {
+  VLOG(6) << ">>> onBufferEof()";
   // 如果不用 resample，缓冲的数据可以直接发送
   uint8_t *send_buf = NULL;
   size_t send_sz = 0;
@@ -137,11 +143,16 @@ void AudioMediaUdsWriter::onBufferEof() {
     src_short_to_float_array((const short *)buffer, (float *)src_data.data_in,
                              src_data.input_frames);
     // 进行重采样
+    VLOG(6) << "... onBufferEof() ... resampling ...";
     do {
       src_errno = src_process(src_state, &src_data);
       CHECK_EQ(0, src_errno)
           << ": src_process() error: " << src_strerror(src_errno);
+      CHECK_LT(0, src_data.output_frames_gen)
+          << ": src_process() generates zero frames.";
     } while (src_data.output_frames_gen < src_data.output_frames);
+    VLOG(6) << "... onBufferEof() ... resampling Ok.";
+
     /// @see: http://www.mega-nerd.com/SRC/api_misc.html#SRC_DATA
     // 将输出float采样的缓冲数据该写成16Kbit采样的数据写入到结果缓冲
     src_float_to_short_array(src_data.data_out, resampled_short_array,
@@ -162,9 +173,11 @@ void AudioMediaUdsWriter::onBufferEof() {
   // DLOG_EVERY_N(INFO, 1000 / bufferMSec)
   //     << "send " << send_sz << " bytes to " << sendtoPath;
   // DVLOG(6) << "send()" << send_sz << " bytes to " << sendtoPath << "...";
+  VLOG(6) << "... onBufferEof() ... send ...";
   ssize_t n_bytes =
       sendto(sockfd, send_buf, send_sz, 0, (struct sockaddr *)sendto_addr,
              sizeof(*sendto_addr));
+  VLOG(6) << "... onBufferEof() ... send completed.";
   // DVLOG(6) << "send() -> " << n_bytes;
   if (n_bytes < 0) {
     switch (errno) {
@@ -178,6 +191,7 @@ void AudioMediaUdsWriter::onBufferEof() {
     }
   }
   VLOG_IF_EVERY_N(3, n_bytes > 0, 100) << "send() -> " << n_bytes << " bytes";
+  VLOG(6) << "<<< onBufferEof()";
 }
 
 void AudioMediaUdsWriter::cb_mem_capture_eof(pjmedia_port *port,
