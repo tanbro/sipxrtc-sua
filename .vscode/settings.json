@@ -1,6 +1,6 @@
 {
     "terminal.integrated.env.linux": {
-        "GIT_SSH_COMMAND": "ssh -o ProxyCommand=\"nc -X 5 -x 127.0.0.1:1080 %h %p\""
+        "GIT_SSH_COMMAND": "ssh -o ProxyCommand=\"nc -X 5 -x localhost:1080 %h %p\""
     },
     "files.associations": {
         "audiodev_imp.h": "c",
@@ -64,6 +64,7 @@
         "thread": "cpp",
         "cinttypes": "cpp",
         "typeinfo": "cpp",
-        "iomanip": "cpp"
+        "iomanip": "cpp",
+        "csignal": "cpp"
     }
 }

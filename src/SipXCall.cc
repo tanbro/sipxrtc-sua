@@ -1,8 +1,5 @@
 #include "SipXCall.hh"
 
-#include <ostream>
-#include <sstream>
-
 #include <glog/logging.h>
 #include <pjmedia/mem_port.h>
 
@@ -10,12 +7,13 @@
 #include "global.hh"
 
 using namespace std;
+using namespace pj;
 
 namespace sipxsua {
 
 static pj_pool_factory pool_factory;
 
-SipXCall::SipXCall(pj::Account &acc, int call_id) : Call(acc, call_id) {
+SipXCall::SipXCall(Account &acc, int call_id) : Call(acc, call_id) {
   pj_caching_pool_init(&cachingPool, NULL, 0);
   pool = pj_pool_create(&cachingPool.factory, "SipXCall", 512, 512, NULL);
   CHECK_NOTNULL(pool);
@@ -38,7 +36,36 @@ SipXCall::~SipXCall() {
   pj_caching_pool_destroy(&cachingPool);
 }
 
-void SipXCall::onCallState(pj::OnCallStateParam &prm) {
+mutex SipXCall::_callsMtx;
+set<TCallPtr> SipXCall::_calls;
+
+TCallPtr SipXCall::createCall(pj::Account &acc, int callId) {
+  auto call = make_shared<SipXCall>(acc, callId);
+  {
+    lock_guard<mutex> lk(_callsMtx);
+    auto result = _calls.insert(call);
+    CHECK(result.second) << ": insertion for calls set not took place";
+  }
+  return call;
+}
+
+bool SipXCall::internalReleaseCall(SipXCall *p) {
+  lock_guard<mutex> lk(_callsMtx);
+  set<TCallPtr>::const_iterator found = _calls.end();
+  for (auto it = _calls.begin(); it != _calls.end(); ++it) {
+    if (p == (SipXCall *)it->get()) {
+      found = it;
+      break;
+    }
+  }
+  if (found == _calls.end()) {
+    return false;
+  }
+  _calls.erase(found);
+  return true;
+}
+
+void SipXCall::onCallState(OnCallStateParam &prm) {
   auto ci = getInfo();
 
   LOG(INFO) << "[" << ci.accId << "]"
@@ -48,12 +75,12 @@ void SipXCall::onCallState(pj::OnCallStateParam &prm) {
 
   if (ci.state == PJSIP_INV_STATE_DISCONNECTED) {
     /// TODO: Schedule/Dispatch call deletion to another thread here
-    sipAcc.removeCall(getId());
+    internalReleaseCall(this);
   }
 }
 
-void SipXCall::onCallMediaState(pj::OnCallMediaStateParam &prm) {
-  pj::AudDevManager &mgr = ep.audDevManager();
+void SipXCall::onCallMediaState(OnCallMediaStateParam &prm) {
+  AudDevManager &mgr = ep.audDevManager();
   auto ci = getInfo();
 
   auto peerMedia = getAudioMedia(-1); // 收到的来自远端的声音媒体
@@ -77,7 +104,7 @@ void SipXCall::onCallMediaState(pj::OnCallMediaStateParam &prm) {
     reader = nullptr;
   }
   reader = new AudioMediaUdsReader();
-  struct pj::MediaFormatAudio rtcAuFmt;
+  struct MediaFormatAudio rtcAuFmt;
   rtcAuFmt.channelCount = 1;
   rtcAuFmt.clockRate = 48000;
   rtcAuFmt.bitsPerSample = 16;

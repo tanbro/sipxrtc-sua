@@ -8,7 +8,11 @@ using namespace std;
 
 namespace sipxsua {
 
-SipXAccount::~SipXAccount() { shutdown(); }
+SipXAccount::~SipXAccount() {
+  auto ai = getInfo();
+  VLOG(1) << "[" << ai.id << "] destruct ... shutdown ...";
+  shutdown();
+}
 
 void SipXAccount::onRegState(pj::OnRegStateParam &prm) {
   auto ai = getInfo();
@@ -19,10 +23,7 @@ void SipXAccount::onRegState(pj::OnRegStateParam &prm) {
 }
 
 void SipXAccount::onIncomingCall(pj::OnIncomingCallParam &iprm) {
-
-  auto call = make_shared<SipXCall>(*this, iprm.callId);
-  auto insRes = callMap.insert(make_pair<int, TCall>(getId(), call));
-  CHECK(insRes.second) << "重复的 Call ID " << getId();
+  auto call = SipXCall::createCall(*this, iprm.callId);
 
   auto ci = call->getInfo();
   auto ai = getInfo();
@@ -37,10 +38,6 @@ void SipXAccount::onIncomingCall(pj::OnIncomingCallParam &iprm) {
             << "answer " << prm.statusCode;
 
   call->answer(prm);
-}
-
-void SipXAccount::removeCall(int callId) {
-  CHECK_LT(0, callMap.erase(callId));
 }
 
 } // namespace sipxsua

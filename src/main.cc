@@ -163,8 +163,10 @@ int main(int argc, char *argv[]) {
   }
   //////////////////
 
-  // Delete the account. This will unregister from server
+  // Delete the account. This will unregister from server]
+  LOG(INFO) << "删除 SIP 账号";
   ep.hangupAllCalls();
+  LOG(INFO) << "释放 SIP Stack";
   ep.libDestroy();
 
   //////////////////
