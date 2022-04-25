@@ -4,6 +4,8 @@
 #include <sys/stat.h>
 #include <sys/un.h>
 
+#include <chrono>
+
 #include <pjlib.h>
 #include <pjmedia.h>
 #include <pjsua2.hpp>
@@ -16,6 +18,9 @@ using namespace std;
 using namespace pj;
 
 namespace sipxsua {
+
+using TClock = chrono::high_resolution_clock;
+using TDuration = chrono::duration<float, micro>;
 
 AudioMediaUdsReader::AudioMediaUdsReader() : AudioMedia() {
   id == PJSUA_INVALID_ID;
@@ -120,6 +125,7 @@ void AudioMediaUdsReader::onBufferEof() {
 
 void AudioMediaUdsReader::runOnce() {
   DVLOG(6) << "recv() ...";
+  auto tsBegin = TClock::now();
   ssize_t n_bytes;
   n_bytes = recv(sockfd, recv_buffer, buffer_size, 0);
   VLOG_IF_EVERY_N(3, n_bytes > 0, 100) << "recv() -> " << n_bytes << " bytes";
@@ -134,6 +140,10 @@ void AudioMediaUdsReader::runOnce() {
     lock_guard<mutex> lk(bufferMtx);
     memcpy(play_buffer, recv_buffer, buffer_size);
   }
+  TDuration elapsed = TClock::now() - tsBegin;
+  VLOG_EVERY_N(3, 100) << "runOnce()"
+                       << " "
+                       << "elapsed = " << elapsed.count() << " usec";
 }
 
 void AudioMediaUdsReader::cb_mem_play_eof(pjmedia_port *port, void *usr_data) {

@@ -2,6 +2,8 @@
 
 #include <sys/socket.h>
 
+#include <chrono>
+
 #include <glog/logging.h>
 
 using namespace std;
@@ -10,6 +12,9 @@ using namespace pj;
 #define THIS_FILE "AudioMediaUdsWriter.cc"
 
 namespace sipxsua {
+
+using TClock = chrono::high_resolution_clock;
+using TDuration = chrono::duration<float, micro>;
 
 AudioMediaUdsWriter::AudioMediaUdsWriter() : AudioMedia() {
   id == PJSUA_INVALID_ID;
@@ -132,24 +137,38 @@ void AudioMediaUdsWriter::createRecorder(
 
 void AudioMediaUdsWriter::onBufferEof() {
   VLOG(6) << ">>> onBufferEof()";
+  auto tsBegin = TClock::now();
+
   // 如果不用 resample，缓冲的数据可以直接发送
   uint8_t *send_buf = NULL;
   size_t send_sz = 0;
   // Resample?
   if (NULL != src_state) {
+    // 进行重采样
+    VLOG(6) << "... onBufferEof() ... resampling ...";
     // 重采样！
     int src_errno;
     // Resampler 原始16bit采样数据转float采样数据装载到输入缓冲
     src_short_to_float_array((const short *)buffer, (float *)src_data.data_in,
                              src_data.input_frames);
-    // 进行重采样
-    VLOG(6) << "... onBufferEof() ... resampling ...";
+    src_data.input_frames_used = 0;
+    src_data.output_frames_gen = 0;
+    src_data.end_of_input = 0;
     do {
       src_errno = src_process(src_state, &src_data);
       CHECK_EQ(0, src_errno)
           << ": src_process() error: " << src_strerror(src_errno);
-      CHECK_LT(0, src_data.output_frames_gen)
-          << ": src_process() generates zero frames.";
+      if (src_data.output_frames_gen <= 0) {
+        LOG(ERROR) << "src_process() generates zero frames. reset resampler!";
+        src_errno = src_reset(src_state);
+        CHECK_EQ(0, src_errno)
+            << ": src_reset() failed: " << src_strerror(src_errno);
+        src_data.input_frames_used = 0;
+        src_data.output_frames_gen = 0;
+        src_data.end_of_input = 0;
+      }
+      // CHECK_LT(0, src_data.output_frames_gen)
+      //     << ": src_process() generates zero frames.";
     } while (src_data.output_frames_gen < src_data.output_frames);
     VLOG(6) << "... onBufferEof() ... resampling Ok.";
 
@@ -190,8 +209,12 @@ void AudioMediaUdsWriter::onBufferEof() {
       break;
     }
   }
-  VLOG_IF_EVERY_N(3, n_bytes > 0, 100) << "send() -> " << n_bytes << " bytes";
-  VLOG(6) << "<<< onBufferEof()";
+  VLOG_IF_EVERY_N(3, n_bytes > 0, 100) << "send() -> " << n_bytes << " bytes.";
+  TDuration elapsed = TClock::now() - tsBegin;
+  VLOG_EVERY_N(3, 100) << "onBufferEof()"
+                       << " "
+                       << "elapsed = " << elapsed.count() << " usec";
+  VLOG(6) << "<<< onBufferEof() ";
 }
 
 void AudioMediaUdsWriter::cb_mem_capture_eof(pjmedia_port *port,
