@@ -21,12 +21,6 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(
-  VERSION_BY_GIT
-  "Defein a `__PROJECT_VERSION__` macro by `git-describe`"
-  ON
-)
-
-option(
   WITH_PJ_STATIC
   "Link to libpjproject's shared/dynamic objects, which requires a configure with `--enable-shared`  and `sudo make install`"
   ON
@@ -55,15 +49,19 @@ option(
   OFF
 )
 
-if (${VERSION_BY_GIT})
-  execute_process (
-    COMMAND git describe
-    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-    RESULT_VARIABLE GIT_DESCRIBE_RESULT
-    OUTPUT_VARIABLE GIT_DESCRIBE_OUTPUT
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
-endif ()
+execute_process (
+  COMMAND git describe
+  WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+  OUTPUT_VARIABLE GIT_DESCRIBE_OUTPUT
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+execute_process (
+  COMMAND git rev-parse --short HEAD
+  WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+  OUTPUT_VARIABLE GIT_REV_PARSE_OUTPUT
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 
 # 项目：这个执行文件
 project(sipxsua)
@@ -98,7 +96,12 @@ target_include_directories(${PROJECT_NAME}
 
 if (GIT_DESCRIBE_OUTPUT)
   target_compile_definitions(${PROJECT_NAME}
-    PRIVATE -D__PROJECT_VERSION__="${GIT_DESCRIBE_OUTPUT}"
+    PRIVATE __GIT_DESC__="${GIT_DESCRIBE_OUTPUT}"
+  )
+endif ()
+if (GIT_REV_PARSE_OUTPUT)
+  target_compile_definitions(${PROJECT_NAME}
+  PRIVATE __GIT_REV__="${GIT_REV_PARSE_OUTPUT}"
   )
 endif ()
 

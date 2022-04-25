@@ -1,6 +1,5 @@
 #include "version.hh"
 
-#include <ostream>
 #include <sstream>
 #include <string>
 
@@ -107,11 +106,14 @@ const string &getVersionString() {
 
   ostringstream oss;
 
-  oss << "git-"
-#ifdef __PROJECT_VERSION__
-      << __PROJECT_VERSION__
+  oss << ": "
+#ifdef __GIT_DESC__
+      << "git " << __GIT_DESC__
 #else
-      << "unknown"
+#endif
+      << " "
+#ifdef __GIT_REV__
+      << "rev " << __GIT_REV__ << ""
 #endif
       << " "
 
@@ -135,7 +137,7 @@ const string &getVersionString() {
 
       << endl
       << endl
-      << "  build: " << __TIME__ << " " << __DATE__ << endl;
+      << "  build: " << __TIME__ << ", " << __DATE__ << endl;
 
   versionString = oss.str();
   return versionString;

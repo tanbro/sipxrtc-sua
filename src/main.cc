@@ -1,17 +1,13 @@
+#include <sys/poll.h>
+
 #include <algorithm>
+#include <csignal>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <iomanip>
 #include <iostream>
 #include <ostream>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
-#include <sys/poll.h>
-
-#include <iostream>
-#include <sstream>
 
 #include <pjsua2.hpp>
 
@@ -51,21 +47,21 @@ int main(int argc, char *argv[]) {
   LOG(INFO) << "Initialize SIP endpoint";
   {
     pj::EpConfig cfg;
-    if (FLAGS_pj_log_level >= 0) {
-      cfg.logConfig.level = FLAGS_pj_log_level;
+    if (FLAGS_sip_log_level >= 0) {
+      cfg.logConfig.level = FLAGS_sip_log_level;
     }
-    if (!FLAGS_pj_log_file.empty()) {
-      cfg.logConfig.filename = FLAGS_pj_log_file;
+    if (!FLAGS_sip_log_file.empty()) {
+      cfg.logConfig.filename = FLAGS_sip_log_file;
     }
-    if (FLAGS_pj_log_console_level >= 0) {
-      cfg.logConfig.consoleLevel = FLAGS_pj_log_console_level;
+    if (FLAGS_sip_console_level >= 0) {
+      cfg.logConfig.consoleLevel = FLAGS_sip_console_level;
     }
     VLOG(1) << ">>> pj::Endpoint::libInit()";
     ep.libInit(cfg);
     VLOG(1) << "<<< pj::Endpoint::libInit()";
   }
 
-  if (FLAGS_pj_list_codecs) {
+  if (FLAGS_list_codecs) {
     auto codecs = ep.codecEnum2();
     sort(codecs.begin(), codecs.end(), [](pj::CodecInfo a, pj::CodecInfo b) {
       return a.priority > b.priority;
@@ -97,9 +93,9 @@ int main(int argc, char *argv[]) {
   LOG(INFO) << "Create SIP transport";
   {
     pj::TransportConfig cfg;
-    cfg.port = FLAGS_pj_sip_port;
+    cfg.port = FLAGS_sip_port;
     if (cfg.port > 0) {
-      cfg.portRange = FLAGS_pj_sip_port_range;
+      cfg.portRange = FLAGS_sip_port_range;
     }
     VLOG(1) << ">>> pj::Endpoint::transportCreate("
             << "boundAddress=\"" << cfg.boundAddress << "\", "
@@ -129,9 +125,9 @@ int main(int argc, char *argv[]) {
     // 本地账户
     pj::AccountConfig cfg;
     cfg.idUri = "sip:0.0.0.0";
-    cfg.mediaConfig.transportConfig.port = FLAGS_pj_rtp_port;
-    cfg.mediaConfig.transportConfig.portRange = FLAGS_pj_rtp_port_range;
-    cfg.mediaConfig.srtpUse = (pjmedia_srtp_use)FLAGS_pj_srtp_use;
+    cfg.mediaConfig.transportConfig.port = FLAGS_rtp_port;
+    cfg.mediaConfig.transportConfig.portRange = FLAGS_rtp_port_range;
+    cfg.mediaConfig.srtpUse = (pjmedia_srtp_use)FLAGS_srtp_use;
     // acc_cfg.idUri = "sip:8007@192.168.2.202";
     // acc_cfg.regConfig.registrarUri = "sip:192.168.2.202";
     // acc_cfg.sipConfig.authCreds.push_back(

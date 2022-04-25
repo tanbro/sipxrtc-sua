@@ -1,7 +1,5 @@
 #include "SipXAccount.hh"
 
-#include <ostream>
-
 #include <glog/logging.h>
 
 #include "SipXCall.hh"

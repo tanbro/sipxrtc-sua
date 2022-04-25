@@ -1,15 +1,11 @@
 #include "AudioMediaUdsReader.hh"
 
-#include <errno.h>
-#include <stdint.h>
-#include <unistd.h>
-
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
 
+#include <cstdint>
 #include <functional>
-#include <iostream>
 #include <sstream>
 
 #include <pjlib.h>
@@ -78,29 +74,12 @@ void AudioMediaUdsReader::createPlayer(const pj::MediaFormatAudio &audioFormat,
   strncpy(recv_addr.sun_path, path.c_str(), sizeof(recv_addr.sun_path) - 1);
   struct stat statbuf;
   if (!stat(recv_addr.sun_path, &statbuf)) {
-    if (unlink(recv_addr.sun_path)) {
-      ostringstream oss;
-      oss << THIS_FILE " unlink error (" << errno << "): " << strerror(errno);
-      cerr << oss.str() << endl;
-      throw new runtime_error(oss.str());
-    }
+    CHECK_ERR(unlink(recv_addr.sun_path));
   }
   // 打开 Unix domain socket
-  sockfd = socket(AF_LOCAL, SOCK_DGRAM, 0);
-  if (sockfd == -1) {
-    ostringstream oss;
-    oss << THIS_FILE " socket error (" << errno << "): " << strerror(errno);
-    cerr << oss.str() << endl;
-    throw new runtime_error(oss.str());
-  }
+  CHECK_ERR(sockfd = socket(AF_LOCAL, SOCK_DGRAM, 0));
   // 绑定文件
-  if (bind(sockfd, (const sockaddr *)&recv_addr, sizeof(recv_addr))) {
-    ostringstream oss;
-    oss << THIS_FILE " socket bind error (" << errno
-        << "): " << strerror(errno);
-    cerr << oss.str() << endl;
-    throw new runtime_error(oss.str());
-  }
+  CHECK_ERR(bind(sockfd, (const sockaddr *)&recv_addr, sizeof(recv_addr)));
 
   // 建立内存播放 Audio Port
   memset(recv_buffer, 0, sizeof(recv_buffer));

@@ -1,9 +1,9 @@
 #ifndef __sipxsua_AudioMediaUdsReader__
 #define __sipxsua_AudioMediaUdsReader__ 1
 
-#include <stdint.h>
-
 #include <sys/un.h>
+
+#include <cstdint>
 
 #include <pjlib.h>
 #include <pjmedia.h>

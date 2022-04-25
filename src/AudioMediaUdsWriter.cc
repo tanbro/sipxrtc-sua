@@ -1,17 +1,8 @@
 #include "AudioMediaUdsWriter.hh"
 
-#include <assert.h>
-#include <errno.h>
-#include <error.h>
-#include <memory.h>
-#include <string.h>
-
 #include <sys/socket.h>
 
-#include <iostream>
 #include <sstream>
-#include <stdexcept>
-#include <system_error>
 
 #include <glog/logging.h>
 

@@ -10,8 +10,8 @@
             "request": "launch",
             "program": "${workspaceFolder}/out/Linux-x86_64-GNU/Debug/bin/sipxsua",
             "args": [
-                "-pj_sip_port=5060",
-                "-pj_log_console_level=0"
+                "-sip_port=5060",
+                "-sip_console_level=0"
             ],
             "cwd": "${workspaceFolder}/out/Linux-x86_64-GNU/Debug/bin",
             "environment": [
