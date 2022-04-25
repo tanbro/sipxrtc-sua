@@ -104,9 +104,9 @@ void AudioMediaUdsWriter::createRecorder(
     resampled_short_array =
         (short *)pj_pool_calloc(pool, src_data.output_frames, sizeof(short));
     // 采样数不能为0！
-    CHECK_NE(0, src_data.input_frames)
+    CHECK_LT(0, src_data.input_frames)
         << ": resample input_frames can not be zero!";
-    CHECK_NE(0, src_data.output_frames)
+    CHECK_LT(0, src_data.output_frames)
         << ": resample output_frames can not be zero!";
     CHECK_NOTNULL(src_data.data_in);
     CHECK_NOTNULL(src_data.data_out);
@@ -154,7 +154,7 @@ void AudioMediaUdsWriter::onBufferEof() {
     src_data.input_frames_used = 0;
     src_data.output_frames_gen = 0;
     src_data.end_of_input = 0;
-    do {
+    while (src_data.output_frames_gen < src_data.output_frames) {
       src_errno = src_process(src_state, &src_data);
       CHECK_EQ(0, src_errno)
           << ": src_process() error: " << src_strerror(src_errno);
@@ -169,7 +169,7 @@ void AudioMediaUdsWriter::onBufferEof() {
       }
       // CHECK_LT(0, src_data.output_frames_gen)
       //     << ": src_process() generates zero frames.";
-    } while (src_data.output_frames_gen < src_data.output_frames);
+    }
     VLOG(6) << "... onBufferEof() ... resampling Ok.";
 
     /// @see: http://www.mega-nerd.com/SRC/api_misc.html#SRC_DATA
