@@ -2,8 +2,6 @@
 
 #include <sys/socket.h>
 
-#include <sstream>
-
 #include <glog/logging.h>
 
 using namespace std;
@@ -163,11 +161,11 @@ void AudioMediaUdsWriter::onBufferEof() {
   // 发送!
   // DLOG_EVERY_N(INFO, 1000 / bufferMSec)
   //     << "send " << send_sz << " bytes to " << sendtoPath;
-  DVLOG(6) << "send()" << send_sz << " bytes to " << sendtoPath << "...";
+  // DVLOG(6) << "send()" << send_sz << " bytes to " << sendtoPath << "...";
   ssize_t n_bytes =
       sendto(sockfd, send_buf, send_sz, 0, (struct sockaddr *)sendto_addr,
              sizeof(*sendto_addr));
-  DVLOG(6) << "send() -> " << n_bytes;
+  // DVLOG(6) << "send() -> " << n_bytes;
   if (n_bytes < 0) {
     switch (errno) {
     case ENOENT:
@@ -179,6 +177,7 @@ void AudioMediaUdsWriter::onBufferEof() {
       break;
     }
   }
+  VLOG_IF_EVERY_N(3, n_bytes > 0, 100) << "send() -> " << n_bytes << " bytes";
 }
 
 void AudioMediaUdsWriter::cb_mem_capture_eof(pjmedia_port *port,

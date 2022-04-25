@@ -1,6 +1,7 @@
 #include <sys/poll.h>
 
 #include <algorithm>
+#include <chrono>
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
@@ -8,6 +9,7 @@
 #include <iomanip>
 #include <iostream>
 #include <ostream>
+#include <thread>
 
 #include <pjsua2.hpp>
 
@@ -158,9 +160,59 @@ int main(int argc, char *argv[]) {
   //////////////
   printf("ctrl-c 退出\n");
   signal(SIGINT, sig_int_handler);
+
+  // 先轮询读取 UdsAudio
+  pollfd *fds = NULL;
+  pollfd *fds_offset;
+  nfds_t nfds;
+  int rc;
   while (running) {
-    sleep(1);
+    if (fds) {
+      free(fds);
+      fds = NULL;
+    }
+    {
+      lock_guard<mutex> lk(AudioMediaUdsReader::instancesMutex);
+      auto readers = AudioMediaUdsReader::getInstances();
+      nfds = readers.size();
+      if (nfds > 0) {
+        fds = (pollfd *)calloc(nfds, sizeof(pollfd));
+        CHECK_NOTNULL(fds);
+        fds_offset = fds;
+        for (auto kv = readers.begin(); kv != readers.end(); ++kv) {
+          fds_offset->fd = kv->first;
+          fds_offset->events = POLLIN;
+          fds_offset += sizeof(fds);
+        }
+      }
+    }
+    if (nfds > 0) {
+      CHECK_ERR(rc = poll(fds, nfds, 1000));
+      fds_offset = fds;
+      for (int i = 0; i < rc; ++i) {
+        if (fds_offset->revents & POLLIN) {
+          lock_guard<mutex> lk(AudioMediaUdsReader::instancesMutex);
+          auto readers = AudioMediaUdsReader::getInstances();
+          auto found = readers.find(fds_offset->fd);
+          if (found == readers.end()) {
+            LOG(FATAL) << ": fd " << fds_offset->fd
+                       << " not found in AudioMediaUdsReader instances map";
+          } else {
+            found->second->runOnce();
+          }
+        }
+        fds_offset += sizeof(fds);
+      }
+    } else {
+      this_thread::sleep_for(chrono::milliseconds(10));
+    }
   }
+
+  if (fds) {
+    free(fds);
+    fds = NULL;
+  }
+
   //////////////////
 
   // Delete the account. This will unregister from server]

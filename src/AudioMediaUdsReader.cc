@@ -4,10 +4,6 @@
 #include <sys/stat.h>
 #include <sys/un.h>
 
-#include <cstdint>
-#include <functional>
-#include <sstream>
-
 #include <pjlib.h>
 #include <pjmedia.h>
 #include <pjsua2.hpp>
@@ -35,7 +31,10 @@ AudioMediaUdsReader::~AudioMediaUdsReader() {
     unregisterMediaPort();
   }
   if (sockfd >= 0) {
+    lock_guard<mutex> lk(instancesMutex);
     CHECK_ERR(close(sockfd));
+    auto n_removed = instances.erase(sockfd);
+    CHECK_EQ(1, n_removed);
   }
   pj_pool_release(pool);
   pj_caching_pool_destroy(&cachingPool);
@@ -65,8 +64,9 @@ void AudioMediaUdsReader::createPlayer(const pj::MediaFormatAudio &audioFormat,
                                    audioFormat.frameTimeUsec / 1000000;
 
   //分配缓冲区
-  assert(buffer_size == sizeof(recv_buffer));
   buffer = (uint8_t *)pj_pool_calloc(pool, buffer_size, sizeof(uint8_t));
+  recv_buffer = (uint8_t *)pj_pool_calloc(pool, buffer_size, sizeof(uint8_t));
+  play_buffer = (uint8_t *)pj_pool_calloc(pool, buffer_size, sizeof(uint8_t));
 
   // 准备绑定文件
   memset(&recv_addr, 0, sizeof(sockaddr_un));
@@ -82,9 +82,15 @@ void AudioMediaUdsReader::createPlayer(const pj::MediaFormatAudio &audioFormat,
   CHECK_ERR(bind(sockfd, (const sockaddr *)&recv_addr, sizeof(recv_addr)));
 
   DVLOG(1) << "bind " << sockfd << ":" << path;
+  {
+    lock_guard<mutex> lk(instancesMutex);
+    auto insRes = instances.insert(make_pair(sockfd, this));
+    CHECK(insRes.second) << ": instances map insertion failed. sockfd="
+                         << sockfd;
+  }
 
   // 建立内存播放 Audio Port
-  memset(recv_buffer, 0, sizeof(recv_buffer));
+  memset(play_buffer, 0, sizeof(play_buffer));
   memset(buffer, 0, buffer_size);
   DVLOG(1) << "createPlayer() ... " << endl
            << "  path=" << path << ", " << endl
@@ -108,28 +114,37 @@ void AudioMediaUdsReader::createPlayer(const pj::MediaFormatAudio &audioFormat,
 
 void AudioMediaUdsReader::onBufferEof() {
   lock_guard<mutex> lk(bufferMtx);
-  memcpy(buffer, recv_buffer, sizeof(recv_buffer));
-  memset(recv_buffer, 0, sizeof(recv_buffer));
+  memcpy(buffer, play_buffer, buffer_size);
+  memset(play_buffer, 0, buffer_size);
 }
 
 void AudioMediaUdsReader::runOnce() {
+  DVLOG(6) << "recv() ...";
   ssize_t n_bytes;
-  {
-    lock_guard<mutex> lk(bufferMtx);
-    n_bytes = recv(sockfd, recv_buffer, sizeof(recv_buffer), 0);
-  }
-  DVLOG(6) << "recv()->" << n_bytes;
+  n_bytes = recv(sockfd, recv_buffer, buffer_size, 0);
+  VLOG_IF_EVERY_N(3, n_bytes > 0, 100) << "recv() -> " << n_bytes << " bytes";
   if (n_bytes < 0) {
     if (errno != EWOULDBLOCK) {
-      CHECK(errno) << ": recv() failed: ";
+      PCHECK(errno) << ": recv() failed: ";
     }
     return;
   }
-  CHECK_EQ(sizeof(recv_buffer), n_bytes);
+  CHECK_EQ(n_bytes, buffer_size);
+  {
+    lock_guard<mutex> lk(bufferMtx);
+    memcpy(play_buffer, recv_buffer, buffer_size);
+  }
 }
 
 void AudioMediaUdsReader::cb_mem_play_eof(pjmedia_port *port, void *usr_data) {
   ((AudioMediaUdsReader *)usr_data)->onBufferEof();
+}
+
+mutex AudioMediaUdsReader::instancesMutex;
+map<int, AudioMediaUdsReader *> AudioMediaUdsReader::instances;
+
+const map<int, AudioMediaUdsReader *> &AudioMediaUdsReader::getInstances() {
+  return instances;
 }
 
 } // namespace sipxsua
