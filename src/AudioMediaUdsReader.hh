@@ -4,6 +4,7 @@
 #include <sys/un.h>
 
 #include <cstdint>
+#include <mutex>
 
 #include <pjlib.h>
 #include <pjmedia.h>
@@ -21,7 +22,7 @@ public:
 
   void createPlayer(const pj::MediaFormatAudio &audioFormat,
                     const std::string &path, unsigned sampleRate,
-                    unsigned bufferMSec = 100);
+                    unsigned bufferMSec);
 
   int getFd() { return sockfd; };
 
@@ -46,6 +47,8 @@ private:
 
   uint8_t *buffer;
   size_t buffer_size;
+
+  std::mutex bufferMtx;
 
   uint8_t recv_buffer[1920];
 

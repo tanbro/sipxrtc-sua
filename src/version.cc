@@ -115,28 +115,26 @@ const string &getVersionString() {
 #ifdef __GIT_REV__
       << "rev " << __GIT_REV__ << ""
 #endif
-      << " "
-
-      << PLATFORM << "/" << ARCHITECTURE
+      << " " << PLATFORM << "/" << ARCHITECTURE << endl
 
       << endl
-      << endl
-      << "  compiler:"
+
+      << "  compiler:" << endl
 #ifdef __GNUC__
-      << endl
       << "    gcc " << __VERSION__
 #else
       << "    unknown"
 #endif
+      << endl
 
       << endl
-      << endl
+
       << "  with:" << endl
       << "    pjsip " << PJ_VERSION << endl
-      << "    " << src_get_version()
+      << "    " << src_get_version() << endl
 
       << endl
-      << endl
+
       << "  build: " << __TIME__ << ", " << __DATE__ << endl;
 
   versionString = oss.str();

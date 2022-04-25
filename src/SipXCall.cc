@@ -22,10 +22,9 @@ SipXCall::SipXCall(Account &acc, int call_id) : Call(acc, call_id) {
 
 SipXCall::~SipXCall() {
   auto ci = getInfo();
-  LOG(WARNING) << "[" << ci.accId << "]"
-               << " "
-               << "(" << ci.id << "/" << ci.callIdString << "): "
-               << "~ Destruct ... " << ci.state << " " << ci.stateText;
+  LOG(WARNING) << "~[" << ci.accId << "]"
+               << "dtor "
+               << "(" << getId() << "/" << ci.callIdString << ")";
   if (reader != nullptr) {
     delete reader;
   }
@@ -37,9 +36,9 @@ SipXCall::~SipXCall() {
 }
 
 mutex SipXCall::_callsMtx;
-set<TCallPtr> SipXCall::_calls;
+set<PCall> SipXCall::_calls;
 
-TCallPtr SipXCall::createCall(pj::Account &acc, int callId) {
+PCall SipXCall::createCall(pj::Account &acc, int callId) {
   auto call = make_shared<SipXCall>(acc, callId);
   {
     lock_guard<mutex> lk(_callsMtx);
@@ -51,7 +50,7 @@ TCallPtr SipXCall::createCall(pj::Account &acc, int callId) {
 
 bool SipXCall::internalReleaseCall(SipXCall *p) {
   lock_guard<mutex> lk(_callsMtx);
-  set<TCallPtr>::const_iterator found = _calls.end();
+  set<PCall>::const_iterator found = _calls.end();
   for (auto it = _calls.begin(); it != _calls.end(); ++it) {
     if (p == (SipXCall *)it->get()) {
       found = it;
@@ -70,7 +69,7 @@ void SipXCall::onCallState(OnCallStateParam &prm) {
 
   LOG(INFO) << "[" << ci.accId << "]"
             << " "
-            << "(" << ci.id << "/" << ci.callIdString << "): CallState ... "
+            << "(" << getId() << "/" << ci.callIdString << "): CallState ... "
             << ci.state << " " << ci.stateText;
 
   if (ci.state == PJSIP_INV_STATE_DISCONNECTED) {
@@ -88,17 +87,15 @@ void SipXCall::onCallMediaState(OnCallMediaStateParam &prm) {
 
   LOG(INFO) << "[" << ci.accId << "]"
             << " "
-            << "(" << ci.id << "/" << ci.callIdString << "):"
+            << "(" << getId() << "/" << ci.callIdString << "):"
             << " "
-            << "CallMedia start!"
-            << "\n"
+            << "MediaState:" << endl
             << "  bits_per_sample=" << peerAuFmt.bitsPerSample << "\n"
             << "  channel=" << peerAuFmt.channelCount << "\n"
             << "  sample_rate=" << peerAuFmt.clockRate << "\n"
             << "  avg_bps=" << peerAuFmt.avgBps << "\n"
             << "  max_bps=" << peerAuFmt.maxBps;
 
-  DVLOG(2) << "create UDS reader";
   if (reader != nullptr) {
     delete reader;
     reader = nullptr;

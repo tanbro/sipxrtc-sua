@@ -81,10 +81,13 @@ void AudioMediaUdsReader::createPlayer(const pj::MediaFormatAudio &audioFormat,
   // 绑定文件
   CHECK_ERR(bind(sockfd, (const sockaddr *)&recv_addr, sizeof(recv_addr)));
 
+  DVLOG(1) << "bind " << sockfd << ":" << path;
+
   // 建立内存播放 Audio Port
   memset(recv_buffer, 0, sizeof(recv_buffer));
   memset(buffer, 0, buffer_size);
   DVLOG(1) << "createPlayer() ... " << endl
+           << "  path=" << path << ", " << endl
            << "  buffer_size=" << buffer_size << ", " << endl
            << "  sample_rate=" << audioFormat.clockRate << ", " << endl
            << "  channel=" << audioFormat.channelCount << ", " << endl
@@ -104,12 +107,17 @@ void AudioMediaUdsReader::createPlayer(const pj::MediaFormatAudio &audioFormat,
 }
 
 void AudioMediaUdsReader::onBufferEof() {
+  lock_guard<mutex> lk(bufferMtx);
   memcpy(buffer, recv_buffer, sizeof(recv_buffer));
   memset(recv_buffer, 0, sizeof(recv_buffer));
 }
 
 void AudioMediaUdsReader::runOnce() {
-  ssize_t n_bytes = recv(sockfd, recv_buffer, sizeof(recv_buffer), 0);
+  ssize_t n_bytes;
+  {
+    lock_guard<mutex> lk(bufferMtx);
+    n_bytes = recv(sockfd, recv_buffer, sizeof(recv_buffer), 0);
+  }
   DVLOG(6) << "recv()->" << n_bytes;
   if (n_bytes < 0) {
     if (errno != EWOULDBLOCK) {

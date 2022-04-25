@@ -24,7 +24,7 @@ public:
 
   void createRecorder(const pj::MediaFormatAudio &audioFormat,
                       const std::string &sendtoPath, unsigned sampleRate,
-                      unsigned bufferMSec = 100);
+                      unsigned bufferMSec);
 
 protected:
   /**
@@ -35,9 +35,14 @@ protected:
    * @brief 目标音频采样率
    */
   unsigned sampleRate;
+
+  unsigned bufferMSec;
+
   void onBufferEof();
 
 private:
+  std::string sendtoPath;
+
   int sockfd = -1;
   sockaddr_un *sendto_addr;
 

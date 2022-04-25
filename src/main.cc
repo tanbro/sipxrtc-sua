@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
     // acc_cfg.sipConfig.authCreds.push_back(
     //     pj::AuthCredInfo("digest", "*", "8007", 0, "hesong"));
     // Create the account
-    sipAcc.create(cfg, true);
+    account.create(cfg, true);
   }
 
   // 使用空设备
@@ -164,7 +164,7 @@ int main(int argc, char *argv[]) {
   //////////////////
 
   // Delete the account. This will unregister from server]
-  LOG(INFO) << "删除 SIP 账号";
+  LOG(INFO) << "关闭所有 SIP 呼叫";
   ep.hangupAllCalls();
   LOG(INFO) << "释放 SIP Stack";
   ep.libDestroy();

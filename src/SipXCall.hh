@@ -13,14 +13,14 @@
 
 namespace sipxsua {
 
-using TCallPtr = std::shared_ptr<pj::Call>;
+using PCall = std::shared_ptr<pj::Call>;
 
 class SipXCall : public pj::Call {
 public:
   SipXCall(pj::Account &acc, int callId = PJSUA_INVALID_ID);
   ~SipXCall();
 
-  static TCallPtr createCall(pj::Account &acc, int callId = PJSUA_INVALID_ID);
+  static PCall createCall(pj::Account &acc, int callId = PJSUA_INVALID_ID);
 
   virtual void onCallState(pj::OnCallStateParam &);
   virtual void onCallMediaState(pj::OnCallMediaStateParam &);
@@ -39,7 +39,7 @@ private:
   AudioMediaUdsWriter *writer = nullptr;
 
   static std::mutex _callsMtx;
-  static std::set<TCallPtr> _calls;
+  static std::set<PCall> _calls;
 };
 
 } // namespace sipxsua

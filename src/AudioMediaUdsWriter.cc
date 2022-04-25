@@ -45,6 +45,8 @@ void AudioMediaUdsWriter::createRecorder(
   // 只支持 16bits sampling
   CHECK_EQ(16, audioFormat.bitsPerSample) << "仅支持 16bits PCM";
 
+  this->sendtoPath = sendtoPath;
+  this->bufferMSec = bufferMSec;
   this->audioFormat = audioFormat;
   this->sampleRate = sampleRate;
 
@@ -106,6 +108,7 @@ void AudioMediaUdsWriter::createRecorder(
 
   // 建立内存采集 Audio Port
   DVLOG(1) << "createRecorder() ... " << endl
+           << "  path=" << sendtoPath << ", " << endl
            << "  buffer_size=" << buffer_size << ", " << endl
            << "  sample_rate=" << audioFormat.clockRate << ", " << endl
            << "  channel=" << audioFormat.channelCount << ", " << endl
@@ -158,9 +161,13 @@ void AudioMediaUdsWriter::onBufferEof() {
   CHECK_LT(0, send_sz);
 
   // 发送!
+  // DLOG_EVERY_N(INFO, 1000 / bufferMSec)
+  //     << "send " << send_sz << " bytes to " << sendtoPath;
+  DVLOG(6) << "send()" << send_sz << " bytes to " << sendtoPath << "...";
   ssize_t n_bytes =
       sendto(sockfd, send_buf, send_sz, 0, (struct sockaddr *)sendto_addr,
              sizeof(*sendto_addr));
+  DVLOG(6) << "send() -> " << n_bytes;
   if (n_bytes < 0) {
     switch (errno) {
     case ENOENT:
