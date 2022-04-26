@@ -78,8 +78,11 @@ set (SOURCES
   ${SRC_DIR}/global.cc
   ${SRC_DIR}/SipXAccount.cc
   ${SRC_DIR}/SipXCall.cc
-  ${SRC_DIR}/AudioMediaUdsWriter.cc
+  ${SRC_DIR}/UdsBase.cc
+  ${SRC_DIR}/UdsReader.cc
+  ${SRC_DIR}/UdsWriter.cc
   ${SRC_DIR}/AudioMediaUdsReader.cc
+  ${SRC_DIR}/AudioMediaUdsWriter.cc
   ${SRC_DIR}/SuaLogWriter.cc
   ${SRC_DIR}/Poller.cc
   ${SRC_DIR}/version.cc

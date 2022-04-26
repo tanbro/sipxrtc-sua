@@ -29,7 +29,7 @@ AudioMediaUdsWriter::~AudioMediaUdsWriter() {
   if (id != PJSUA_INVALID_ID) {
     unregisterMediaPort();
   }
-  if (sockfd != 0) {
+  if (!(sockfd < 0)) {
     CHECK_ERR(close(sockfd));
   }
   if (NULL != src_state) {
