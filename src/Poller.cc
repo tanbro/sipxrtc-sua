@@ -37,19 +37,15 @@ int Poller::refillFds() {
 
 size_t Poller::performOnce(int timeout) {
   int rc;
-  VLOG(1) << "poll=() ...";
   CHECK_ERR(rc = poll(fds, nfds, timeout));
 
   if (!rc) {
     // Timeout!
     return 0;
   }
-  VLOG(1) << "poll() -> " << rc;
-
   size_t _cnt = 0;
   for (int i = 0; i < rc; ++i) {
     pollfd pfd = fds[i];
-    VLOG(1) << pfd.fd << ":" << pfd.revents;
     if (pfd.revents & POLLERR) {
       LOG(WARNING) << "POLLERR";
     }
