@@ -9,19 +9,19 @@ namespace sipxsua {
 
 UdsBase::~UdsBase() {
   if (!(fd < 0)) {
-    deactivate();
+    ::close(fd);
   }
 }
 
-int UdsBase::activate() {
+int UdsBase::open() {
   CHECK_GT(0, fd); // 不许重复打开
   CHECK_ERR(fd = socket(AF_UNIX, SOCK_DGRAM, 0));
   return fd;
 }
 
-void UdsBase::deactivate() {
+void UdsBase::close() {
   CHECK_LT(0, fd); // 不许重复关闭
-  CHECK_ERR(close(fd));
+  CHECK_ERR(::close(fd));
   fd = -1;
 }
 

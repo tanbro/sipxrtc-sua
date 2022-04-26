@@ -12,8 +12,8 @@ using namespace std;
 
 namespace sipxsua {
 
-int UdsReader::activate() {
-  UdsBase::activate();
+int UdsReader::open() {
+  UdsBase::open();
   struct stat statbuf;
   if (!stat(addr.sun_path, &statbuf)) {
     LOG(WARNING) << "unlink " << path;
@@ -23,8 +23,8 @@ int UdsReader::activate() {
   return fd;
 }
 
-void UdsReader::deactivate() {
-  UdsBase::deactivate();
+void UdsReader::close() {
+  UdsBase::close();
   struct stat statbuf;
   if (!stat(addr.sun_path, &statbuf)) {
     CHECK_ERR(unlink(addr.sun_path));

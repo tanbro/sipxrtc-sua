@@ -12,8 +12,8 @@ public:
   UdsBase(){};
   virtual ~UdsBase();
 
-  virtual int activate();
-  virtual void deactivate();
+  virtual int open();
+  virtual void close();
 
   virtual int getFd();
 

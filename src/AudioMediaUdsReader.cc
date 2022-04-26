@@ -30,7 +30,7 @@ AudioMediaUdsReader::AudioMediaUdsReader(const string &path)
                         NULL);
   CHECK_NOTNULL(pool);
   //
-  activate();
+  open();
   DLOG(INFO) << "activated! fd=" << fd;
 }
 

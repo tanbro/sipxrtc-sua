@@ -15,8 +15,8 @@ public:
 
   virtual ssize_t read(void *data, size_t length);
 
-  virtual int activate() override;
-  virtual void deactivate() override;
+  virtual int open() override;
+  virtual void close() override;
 
 protected:
   sockaddr_un addr;
