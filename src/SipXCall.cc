@@ -36,9 +36,9 @@ SipXCall::~SipXCall() {
 }
 
 mutex SipXCall::_callsMtx;
-set<PCall> SipXCall::_calls;
+set<shared_ptr<SipXCall>> SipXCall::_calls;
 
-PCall SipXCall::createCall(pj::Account &acc, int callId) {
+shared_ptr<SipXCall> SipXCall::createCall(pj::Account &acc, int callId) {
   auto call = make_shared<SipXCall>(acc, callId);
   {
     lock_guard<mutex> lk(_callsMtx);
@@ -50,7 +50,7 @@ PCall SipXCall::createCall(pj::Account &acc, int callId) {
 
 bool SipXCall::internalReleaseCall(SipXCall *p) {
   lock_guard<mutex> lk(_callsMtx);
-  set<PCall>::const_iterator found = _calls.end();
+  auto found = _calls.end();
   for (auto it = _calls.begin(); it != _calls.end(); ++it) {
     if (p == (SipXCall *)it->get()) {
       found = it;
