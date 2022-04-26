@@ -158,17 +158,8 @@ void AudioMediaUdsWriter::onBufferEof() {
       src_errno = src_process(src_state, &src_data);
       CHECK_EQ(0, src_errno)
           << ": src_process() error: " << src_strerror(src_errno);
-      if (src_data.output_frames_gen <= 0) {
-        LOG(ERROR) << "src_process() generates zero frames. reset resampler!";
-        src_errno = src_reset(src_state);
-        CHECK_EQ(0, src_errno)
-            << ": src_reset() failed: " << src_strerror(src_errno);
-        src_data.input_frames_used = 0;
-        src_data.output_frames_gen = 0;
-        src_data.end_of_input = 0;
-      }
-      // CHECK_LT(0, src_data.output_frames_gen)
-      //     << ": src_process() generates zero frames.";
+      CHECK_LT(0, src_data.output_frames_gen)
+          << ": src_process() generates zero frames.";
     }
     VLOG(6) << "... onBufferEof() ... resampling Ok.";
 

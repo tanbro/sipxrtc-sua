@@ -13,7 +13,7 @@
 
 namespace sipxsua {
 
-using PCall = std::shared_ptr<pj::Call>;
+using PCall = std::unique_ptr<pj::Call>;
 
 class SipXCall : public pj::Call {
 public:
