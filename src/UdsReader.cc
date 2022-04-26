@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 
 #include <cstring>
+#include <thread>
 
 #include <glog/logging.h>
 
@@ -38,7 +39,19 @@ UdsReader::UdsReader(const std::string &path) : path(path) {
 
 ssize_t UdsReader::read(void *data, size_t length) {
   CHECK_LT(0, fd);
-  return sendto(fd, data, length, 0, (struct sockaddr *)&addr, sizeof(addr));
+  VLOG(6) << "[" << hex << this_thread::get_id() << "] "
+          << ">>> recv("
+          << "fd=" << hex << fd << dec << ", "
+          << "data=" << data << ", "
+          << "length=" << length << ")";
+  ssize_t res = recv(fd, data, length, 0);
+  VLOG(6) << "[" << hex << this_thread::get_id() << "] "
+          << "<<< recv("
+          << "fd=" << hex << fd << dec << ", "
+          << "data=" << data << ", "
+          << "length=" << length << ")"
+          << " -> " << dec << res;
+  return res;
 }
 
 } // namespace sipxsua

@@ -35,32 +35,39 @@ SipXCall::~SipXCall() {
   pj_caching_pool_destroy(&cachingPool);
 }
 
-mutex SipXCall::_callsMtx;
-set<shared_ptr<SipXCall>> SipXCall::_calls;
+mutex SipXCall::instancesMutex;
+set<shared_ptr<SipXCall>> SipXCall::instances;
 
 shared_ptr<SipXCall> SipXCall::createCall(pj::Account &acc, int callId) {
   auto call = make_shared<SipXCall>(acc, callId);
   {
-    lock_guard<mutex> lk(_callsMtx);
-    auto result = _calls.insert(call);
+    lock_guard<mutex> lk(instancesMutex);
+    auto result = instances.insert(call);
     CHECK(result.second) << ": insertion for calls set not took place";
+
+    VLOG(1) << "call [" << call->getId()
+            << "] created. instances.size():" << instances.size();
   }
   return call;
 }
 
 bool SipXCall::internalReleaseCall(SipXCall *p) {
-  lock_guard<mutex> lk(_callsMtx);
-  auto found = _calls.end();
-  for (auto it = _calls.begin(); it != _calls.end(); ++it) {
+  lock_guard<mutex> lk(instancesMutex);
+  auto cid = p->getId();
+  auto found = instances.end();
+  for (auto it = instances.begin(); it != instances.end(); ++it) {
     if (p == (SipXCall *)it->get()) {
       found = it;
       break;
     }
   }
-  if (found == _calls.end()) {
-    return false;
+  if (found == instances.end()) {
+    LOG(ERROR) << "Call [" << cid << "] not in instances set";
   }
-  _calls.erase(found);
+  instances.erase(found);
+  VLOG(1) << "call [" << cid
+          << "] released. instances.size():" << instances.size();
+
   return true;
 }
 
@@ -100,22 +107,24 @@ void SipXCall::onCallMediaState(OnCallMediaStateParam &prm) {
     delete reader;
     reader = nullptr;
   }
-  reader = new AudioMediaUdsReader();
+  reader = new AudioMediaUdsReader("/tmp/sipxrtp-trtc.sock");
   struct MediaFormatAudio rtcAuFmt;
   rtcAuFmt.channelCount = 1;
   rtcAuFmt.clockRate = 48000;
   rtcAuFmt.bitsPerSample = 16;
   rtcAuFmt.frameTimeUsec = 20000; // 20 毫秒
-  reader->createPlayer(rtcAuFmt, "/tmp/sipxrtp-trtc.sock", 48000, 20);
+  reader->createPlayer(rtcAuFmt, 48000, 20);
 
   DVLOG(2) << "create UDS writer";
   if (writer != nullptr) {
     delete writer;
     writer = nullptr;
   }
-  writer = new AudioMediaUdsWriter();
-  writer->createRecorder(peerAuFmt, "/tmp/sipxrtp-sua.sock", 48000, 20);
+  writer = new AudioMediaUdsWriter("/tmp/sipxrtp-sua.sock");
+  writer->createRecorder(peerAuFmt, 48000, 20);
 
+  /// [Playerback] reader ==> peer
+  /// [Capture] peer ==> writer
   DVLOG(2) << "UDS Reader startTransmit";
   reader->startTransmit(peerMedia);
   DVLOG(2) << "UDS Writer startTransmit";
@@ -125,5 +134,46 @@ void SipXCall::onCallMediaState(OnCallMediaStateParam &prm) {
 AudioMediaUdsReader *SipXCall::getReader() { return reader; }
 
 AudioMediaUdsWriter *SipXCall::getWriter() { return writer; }
+
+set<int> SipXCall::getAllFds() {
+  set<int> result;
+  {
+    lock_guard<mutex> lk(instancesMutex);
+    for (auto it = instances.begin(); it != instances.end(); ++it) {
+      auto call = *it;
+      if (call->reader) {
+        result.insert(call->reader->getFd());
+      }
+      if (call->writer) {
+        result.insert(call->writer->getFd());
+      }
+    }
+  }
+  return result;
+}
+
+AudioMediaUdsReader *SipXCall::findReader(int fd) {
+  for (auto it = instances.begin(); it != instances.end(); ++it) {
+    auto call = *it;
+    if (call->reader) {
+      if (fd == call->reader->getFd()) {
+        return call->reader;
+      }
+    }
+  }
+  return NULL;
+}
+
+AudioMediaUdsWriter *SipXCall::findWriter(int fd) {
+  for (auto it = instances.begin(); it != instances.end(); ++it) {
+    auto call = *it;
+    if (call->writer) {
+      if (fd == call->writer->getFd()) {
+        return call->writer;
+      }
+    }
+  }
+  return NULL;
+}
 
 } // namespace sipxsua

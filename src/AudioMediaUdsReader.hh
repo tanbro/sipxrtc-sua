@@ -4,34 +4,28 @@
 #include <sys/un.h>
 
 #include <cstdint>
-#include <map>
 #include <mutex>
 
 #include <pjlib.h>
 #include <pjmedia.h>
 #include <pjsua2.hpp>
 
+#include "UdsReader.hh"
+
 namespace sipxsua {
 
 /**
  * Audio Media player, read received audio data from Unix Socket.
  */
-class AudioMediaUdsReader : public pj::AudioMedia {
+class AudioMediaUdsReader : public pj::AudioMedia, public UdsReader {
 public:
-  AudioMediaUdsReader();
+  AudioMediaUdsReader(const std::string &path);
   virtual ~AudioMediaUdsReader();
 
   void createPlayer(const pj::MediaFormatAudio &audioFormat,
-                    const std::string &path, unsigned sampleRate,
-                    unsigned bufferMSec);
+                    unsigned sampleRate, unsigned bufferMSec);
 
-  int getFileDescriptor() { return sockfd; };
-
-  void runOnce();
-
-  /// FD -> Reader，给 poll 用
-  static std::mutex instancesMutex;
-  static const std::map<int, AudioMediaUdsReader *> &getInstances();
+  void read();
 
 protected:
   /**
@@ -47,17 +41,13 @@ protected:
 private:
   static std::map<int, AudioMediaUdsReader *> instances;
 
-  int sockfd = -1;
-  sockaddr_un recv_addr;
+  pjmedia_port *port = NULL;
 
-  pjmedia_port *port;
-
-  uint8_t *buffer;
+  std::mutex buffer_mtx;
   size_t buffer_size;
-  uint8_t *recv_buffer;
-  uint8_t *play_buffer;
-
-  std::mutex bufferMtx;
+  uint8_t *play_buffer = NULL;
+  uint8_t *read_buffer = NULL;
+  void *read_buffer0 = NULL;
 
   static void cb_mem_play_eof(pjmedia_port *port, void *usr_data);
 
