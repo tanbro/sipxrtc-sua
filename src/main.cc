@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cerrno>
 #include <csignal>
 #include <cstddef>
 #include <cstdlib>
@@ -21,11 +22,13 @@
 using namespace std;
 using namespace sipxsua;
 
-static bool running = true;
+static bool interrupted = false;
 
-void sig_int_handler(int dummy) {
-  LOG(INFO) << "sig_int_handler: " << hex << this_thread::get_id();
-  running = false;
+static void sig_handler(int sig) {
+  LOG(WARNING) << "[0x" << hex << this_thread::get_id() << dec << "]"
+               << " "
+               << "sig_handler:" << sig;
+  interrupted = true;
 }
 
 int main(int argc, char *argv[]) {
@@ -35,8 +38,8 @@ int main(int argc, char *argv[]) {
 
   LOG(WARNING) << endl
                << "================ startup ================" << endl
-               << argv[0] << endl
-               << "[" << hex << this_thread::get_id() << "]" << endl
+               << "[0x" << hex << this_thread::get_id() << dec << "]"
+               << " " << argv[0] << endl
                << "  version: " << getVersionString() << endl
                << "^^^^^^^^^^^^^^^^ startup ^^^^^^^^^^^^^^^^" << endl;
 
@@ -130,18 +133,14 @@ int main(int argc, char *argv[]) {
     cfg.mediaConfig.transportConfig.port = FLAGS_rtp_port;
     cfg.mediaConfig.transportConfig.portRange = FLAGS_rtp_port_range;
     cfg.mediaConfig.srtpUse = (pjmedia_srtp_use)FLAGS_srtp_use;
-    // acc_cfg.idUri = "sip:8007@192.168.2.202";
-    // acc_cfg.regConfig.registrarUri = "sip:192.168.2.202";
-    // acc_cfg.sipConfig.authCreds.push_back(
-    //     pj::AuthCredInfo("digest", "*", "8007", 0, "hesong"));
-    // Create the account
     account.create(cfg, true);
   }
 
   // 使用空设备
+  LOG(INFO) << "Create audio device";
   pj::AudDevManager &aud_dev_mgr = ep.audDevManager();
   aud_dev_mgr.setNullDev();
-  CHECK_EQ(0, aud_dev_mgr.getDevCount()) << "audDevManager::setNullDev() 失败";
+  CHECK_EQ(0, aud_dev_mgr.getDevCount());
 
   // cout << "输入要呼叫的 SIP URI:" << endl;
   // getline(cin, line);
@@ -158,28 +157,16 @@ int main(int argc, char *argv[]) {
   // }
 
   //////////////
-  printf("ctrl-c 退出\n");
-  signal(SIGINT, sig_int_handler);
+  PCHECK(SIG_ERR != signal(SIGINT, sig_handler));
+  cout << "ctrl-c 退出" << endl;
 
-  while (running) {
-    int nfds = poller.refillFds();
-    if (nfds > 0) {
-      poller.performOnce(1000);
-      // auto performed = poller.performOnce(1000);
-      // if (!performed) {
-      //   this_thread::sleep_for(chrono::milliseconds(100));
-      // }
-    } else {
-      this_thread::sleep_for(chrono::milliseconds(100));
-    }
-  }
+  poller.runUntil(1000, 1000, []() { return !interrupted; });
 
   //////////////////
 
-  // Delete the account. This will unregister from server]
-  LOG(INFO) << "关闭所有 SIP 呼叫";
+  LOG(WARNING) << "Hangup all calls";
   ep.hangupAllCalls();
-  LOG(INFO) << "释放 SIP Stack";
+  LOG(WARNING) << "Destroy SIP library";
   ep.libDestroy();
 
   //////////////////

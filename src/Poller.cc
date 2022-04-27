@@ -12,6 +12,9 @@ using namespace std;
 
 namespace sipxsua {
 
+using TClock = chrono::high_resolution_clock;
+using TDuration = chrono::duration<float, milli>;
+
 int Poller::refillFds() {
   lock_guard<mutex> lk(SipXCall::instancesMutex);
   memset(fds, 0, sizeof(fds));
@@ -35,46 +38,49 @@ int Poller::refillFds() {
   return i;
 }
 
-size_t Poller::performOnce(int timeout) {
+void Poller::runUntil(int timeout, int interval, PollPred pred) {
   int rc;
-  CHECK_ERR(rc = poll(fds, nfds, timeout));
-
-  if (!rc) {
-    // Timeout!
-    return 0;
-  }
-  size_t _cnt = 0;
-  for (int i = 0; i < rc; ++i) {
-    pollfd pfd = fds[i];
-    if (pfd.revents & POLLERR) {
-      LOG(WARNING) << "POLLERR";
+  auto tp = TClock::now();
+  while (1) {
+    if (refillFds()) {
+      CHECK_ERR(rc = poll(fds, nfds, timeout));
+      if (rc) {
+        tp = TClock::now();
+        for (int i = 0; i < rc; ++i) {
+          pollfd pfd = fds[i];
+          if (pfd.revents & POLLERR) {
+            LOG(WARNING) << "POLLERR";
+          }
+          if (pfd.revents & POLLHUP) {
+            LOG(WARNING) << "POLLHUP";
+          }
+          if (pfd.revents & POLLNVAL) {
+            LOG(WARNING) << "POLLNVAL";
+          }
+          if (pfd.revents & POLLIN) {
+            lock_guard<mutex> lk(SipXCall::instancesMutex);
+            auto reader = SipXCall::findReader(pfd.fd);
+            if (reader) {
+              reader->read();
+            }
+          }
+        } /// endfor
+      } else {
+        // Timeout!
+        this_thread::sleep_for(chrono::milliseconds(interval));
+      }
+    } else {
+      // no fds!
+      this_thread::sleep_for(chrono::milliseconds(interval));
     }
-    if (pfd.revents & POLLHUP) {
-      LOG(WARNING) << "POLLHUP";
-    }
-    if (pfd.revents & POLLNVAL) {
-      LOG(WARNING) << "POLLNVAL";
-    }
-    if (pfd.revents & POLLIN) {
-      lock_guard<mutex> lk(SipXCall::instancesMutex);
-      auto reader = SipXCall::findReader(pfd.fd);
-      if (reader) {
-        reader->read();
-        ++_cnt;
+    // 检查：是否继续循环?
+    if (!nfds || !rc ||
+        (((TDuration)(TClock::now() - tp)).count() > interval)) {
+      if (!pred()) {
+        break;
       }
     }
-  }
-  return _cnt;
+  } /// endwhile
 }
 
-void Poller::runForever() {
-  while (true) {
-    refillFds();
-    if (nfds > 0) {
-      performOnce(1000);
-    } else {
-      this_thread::sleep_for(chrono::milliseconds(100));
-    }
-  }
-}
 } // namespace sipxsua

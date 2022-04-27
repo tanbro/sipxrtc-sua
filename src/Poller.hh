@@ -14,6 +14,12 @@
 namespace sipxsua {
 
 /**
+ * @brief 返回 `true` 方可继续 poll, 否则退出
+ *
+ */
+using PollPred = bool (*)();
+
+/**
  * @brief
  *
  * ??? 注意：
@@ -28,13 +34,12 @@ public:
   Poller(){};
   ~Poller(){};
 
-  void runForever();
-  int refillFds();
-  size_t performOnce(int timeout);
+  void runUntil(int timeout, int interval, PollPred pred);
 
 private:
   pollfd fds[SIPXSUA_MAX_POLL_FDS];
   int nfds = 0;
+  int refillFds();
 };
 
 }; // namespace sipxsua
