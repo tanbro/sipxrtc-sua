@@ -14,7 +14,7 @@
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
-#include "IpcFlags.hh"
+#include "AppFlags.hh"
 #include "SipFlags.hh"
 #include "SipXAccount.hh"
 #include "SipXCall.hh"
@@ -152,19 +152,16 @@ int main(int argc, char *argv[]) {
   aud_dev_mgr.setNullDev();
   CHECK_EQ(0, aud_dev_mgr.getDevCount());
 
-  // cout << "输入要呼叫的 SIP URI:" << endl;
-  // getline(cin, line);
-  // if (!line.empty()) {
-  //   pj::Call *call = new SipXCall(sipAcc);
-  //   pj::CallOpParam prm(true); // Use default call settings
-  //   try {
-  //     call->makeCall(line, prm);
-  //   } catch (pj::Error &err) {
-  //     cout << err.info() << endl;
-  //     LOG(ERROR) << "makeCall 失败: (" << err.status << " " << err.reason
-  //                << ") " << err.info();
-  //   }
-  // }
+  auto call = SipXCall::createCall(account);
+  try {
+    pj::CallOpParam cop(true); // Use default call settings
+    call->makeCall(FLAGS_dst_uri, cop);
+  } catch (pj::Error &err) {
+    cout << err.info() << endl;
+    LOG(ERROR) << "failed on makeCall(\"" << FLAGS_dst_uri << "\")"
+               << " " << err.status << ": " << err.reason << endl
+               << err.info();
+  }
 
   //////////////
   for (int i = 0; i < (sizeof(hand_sigs) / sizeof(hand_sigs[0])); ++i) {

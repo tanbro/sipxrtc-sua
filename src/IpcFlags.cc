@@ -1,6 +1,7 @@
 #include "IpcFlags.hh"
 
 #include <cstdint>
+#include <cstring>
 
 #include <samplerate.h>
 

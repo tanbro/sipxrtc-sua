@@ -85,6 +85,7 @@ set (SOURCES
   ${SRC_DIR}/SuaLogWriter.cc
   ${SRC_DIR}/Poller.cc
   ${SRC_DIR}/global.cc
+  ${SRC_DIR}/AppFlags.cc
   ${SRC_DIR}/IpcFlags.cc
   ${SRC_DIR}/SipFlags.cc
   ${SRC_DIR}/version.cc

@@ -27,13 +27,13 @@ void SipXAccount::onIncomingCall(pj::OnIncomingCallParam &iprm) {
   auto ci = call->getInfo();
 
   pj::CallOpParam prm;
-  prm.statusCode = PJSIP_SC_OK;
+  prm.statusCode = PJSIP_SC_UNWANTED;
 
-  LOG(INFO) << "[" << getId() << "] onIncomingCall"
-            << " "
-            << "(" << ci.id << "/" << ci.callIdString << "):"
-            << " " << ci.remoteUri << " --> " << ci.localUri << " "
-            << "answer " << prm.statusCode;
+  LOG(WARNING) << "[" << getId() << "] onIncomingCall"
+               << " "
+               << "(" << ci.id << "/" << ci.callIdString << "):"
+               << " " << ci.remoteUri << " --> " << ci.localUri << " "
+               << "answer: " << prm.statusCode;
 
   call->answer(prm);
 }

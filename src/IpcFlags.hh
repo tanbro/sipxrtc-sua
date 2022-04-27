@@ -1,9 +1,6 @@
 #ifndef __sipxsua_IpcFlags_h__
 #define __sipxsua_IpcFlags_h__ 1
 
-#include <cstdint>
-#include <cstring>
-
 #include <gflags/gflags.h>
 
 DECLARE_string(aud_playback_path);

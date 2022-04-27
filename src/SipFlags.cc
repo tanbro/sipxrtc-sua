@@ -25,7 +25,7 @@ DEFINE_bool(list_codecs, false,
             "在 SIP 模块初始化后, 列出其支持的音频编码, 然后退出程序");
 
 DEFINE_int32(sip_console_level, -1,
-             "设置 PJ 的 Console 输出级别. `<0` 表示采用默认值 (6=very "
+             "SIP 模块的 Console 输出级别. `<0` 表示采用默认值 (6=very "
              "detailed..1=error only, 0=disabled)");
 DEFINE_int32(sip_log_level, -1,
              "设置 PJ 的日志级别. `<0` 表示采用默认值 (6=very "
