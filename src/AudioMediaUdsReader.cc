@@ -35,7 +35,7 @@ AudioMediaUdsReader::AudioMediaUdsReader(const string &path)
 }
 
 AudioMediaUdsReader::~AudioMediaUdsReader() {
-  /// TODO: 死循环，退不出来的
+  LOG(INFO) << "~dtor";
   if (id != PJSUA_INVALID_ID) {
     unregisterMediaPort();
   }

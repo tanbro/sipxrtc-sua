@@ -26,16 +26,16 @@ void SipXAccount::onIncomingCall(pj::OnIncomingCallParam &iprm) {
 
   auto ci = call->getInfo();
 
-  pj::CallOpParam prm;
+  pj::CallOpParam prm(true);
   prm.statusCode = PJSIP_SC_UNWANTED;
 
   LOG(WARNING) << "[" << getId() << "] onIncomingCall"
                << " "
                << "(" << ci.id << "/" << ci.callIdString << "):"
                << " " << ci.remoteUri << " --> " << ci.localUri << " "
-               << "answer: " << prm.statusCode;
+               << "hangup: " << prm.statusCode;
 
-  call->answer(prm);
+  call->hangup(prm);
 }
 
 } // namespace sipxsua

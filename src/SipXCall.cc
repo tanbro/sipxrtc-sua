@@ -15,11 +15,12 @@ using namespace pj;
 namespace sipxsua {
 
 SipXCall::SipXCall(Account &acc, int call_id) : Call(acc, call_id) {
+  LOG(INFO) << "ctor " << getId();
   _isIncoming = call_id != PJSUA_INVALID_ID;
 }
 
 SipXCall::~SipXCall() {
-  LOG(INFO) << "~ dtor " << getId();
+  LOG(INFO) << "~dtor " << getId();
   destroyPlayerAndRecorder();
 }
 
@@ -69,12 +70,9 @@ void SipXCall::onCallState(OnCallStateParam &prm) {
 
   if (ci.state == PJSIP_INV_STATE_DISCONNECTED) {
     /// ATTENTION: Schedule/Dispatch call deletion to another thread here
+    /// `theCall` 是全局的 shared_ptr，不会自动释放！
     internalReleaseCall(this);
     if (this == theCall.get()) {
-      LOG(WARNING) << "[" << ci.accId << "]"
-                   << " "
-                   << "(" << getId() << "/" << ci.callIdString
-                   << "): The outgoing call ended!";
       interrupted = true;
     }
   }
