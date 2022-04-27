@@ -1,36 +1,44 @@
-# SIPUAC
+# SIPXSUA
 
-一个实验性质的 SIPUAC，基于 PJPROJECT。目标是:
+SIPX 的 [SIP][] 软电话。
 
-- 将/从自定义的内存块文件/流或者其它什么东西作为声音的IO
+这个程序用于 SIPX，它的功能是：
 
-## 音频流的获取与推送
+- 启动后向指定的 SIP URI 发起音频呼叫。
+- 接通后，通过 IPC 将从对端收到的 PCM 音频流发送到指定的位置。
+- 接通后，通过 IPC 从指定位置读取 PCM 音频流，并发送给对端。
 
-`pjproject` 的声音管道：
+它基于 [PJSIP][]
+
+## 音频流控制的实现原理
+
+[PJSIP][] 的声音管道：
 
 参照 <https://trac.pjsip.org/repos/wiki/media-flow> 的说明：
 
 ![media-flow](http://www.pjsip.org/images/media-flow.jpg)
 
-### 第一个思路 - 空设备
+1. 第一个思路 - 空设备
 
-让 `pjproject` 使用“空声音设备”，然后利用录音、放音的 AudioPort 组合达到上述目的。
+   让 [PJSIP][] 使用“空声音设备”，然后利用录音、放音的 AudioPort 组合达到上述目的。
 
-> 参考:
->
-> - `pjmedia/include/wav_port.h`, `pjmedia/src/wav_player.h`, `pjmedia/src/wav_writer.h` 实现了文件读写 AudioPort
-> - `submodules/pjproject/pjsip/src/pjsua-lib/pjsua_aud.c` 的 `pjsua_recorder_create` 等，对上述 AudioPort 的调用
-> - `pjsip/src/pjsua2/media.cpp` 的 `AudioMediaRecorder` 与 `AudioMediaPlayer` 调用 `pjsua` 提供的接口。
+   > 参考:
+   >
+   > - `pjmedia/include/wav_port.h`, `pjmedia/src/wav_player.h`, `pjmedia/src/wav_writer.h` 实现了文件读写 `AudioPort`
+   > - `submodules/pjproject/pjsip/src/pjsua-lib/pjsua_aud.c` 的 `pjsua_recorder_create` 等，对上述 `AudioPort` 的调用
+   > - `pjsip/src/pjsua2/media.cpp` 的 `AudioMediaRecorder` 与 `AudioMediaPlayer` 调用 `pjsua` 提供的接口。
 
-`pjmedia/include/pjmedia/mem_port.h` 似乎可以做这件事
+   `pjmedia/include/pjmedia/mem_port.h` 似乎可以做这件事
 
-configure 的时候，指定 `--disable-sound` 参数让 `pjproject` 使用“空声音设备”。
+   `configure` 的时候，指定 `--disable-sound` 参数让 [PJSIP][] 使用“空声音设备”。
 
-### 第二个思路 - 自定义设备
+1. 第二个思路 - 自定义设备
 
-参照 <https://trac.pjsip.org/repos/wiki/External_Sound_Device> 与 <https://trac.pjsip.org/repos/wiki/Audio_Dev_API#PortedDevices>
-
-在构建时指定 `--enable-ext-sound`，然后模仿 `pjmedia/src/pjmedia-audiodev/alsa_dev.c`, `pjmedia/src/pjmedia-audiodev/null_dev.c` 等实现我们所需要的自定义设备，而后修改 `/pjmedia/src/pjmedia-audiodev/audiodev.c` ，让 `pjproject` 加载这个设备。
+   参照 <https://trac.pjsip.org/repos/wiki/External_Sound_Device> 与 <https://trac.pjsip.org/repos/wiki/Audio_Dev_API#PortedDevices>
+  
+   在构建时指定 `--enable-ext-sound`，然后模仿 `pjmedia/src/pjmedia-audiodev/alsa_dev.c`, `pjmedia/src/pjmedia-audiodev/null_dev.c` 等实现我们所需要的自定义设备，而后修改 `/pjmedia/src/pjmedia-audiodev/audiodev.c` ，让 [PJSIP][] 加载这个设备。
+  
+最终，我们采用了**第一种方法**。
 
 ## 搭建开发环境
 
@@ -56,11 +64,11 @@ configure 的时候，指定 `--disable-sound` 参数让 `pjproject` 使用“�
 
 1. 构建和安装 `bcg729`
 
-   由于 G.729 在 CTI 领域十分重要，我们认为这是一个**必选项**。
+   由于 [G.729][] 在 CTI 领域十分重要，我们认为这是一个**必选项**。
 
-   `pjproject` 可以使用 bcg729 (<https://github.com/BelledonneCommunications/bcg729>)，它已经被加入到了 submodules.
+   [PJSIP][] 可以使用 [bcg729](https://github.com/BelledonneCommunications/bcg729)，它已经被加入到了 submodules.
 
-   我们首先将这个 submodule 检出到最近的发行版（目前是 1.1.1）:
+   我们首先将这个 `submodule` 检出到最近的发行版（目前是 1.1.1）:
 
    ```bash
    cd submodules/bcg729
@@ -75,21 +83,21 @@ configure 的时候，指定 `--disable-sound` 参数让 `pjproject` 使用“�
    sudo make install
    ```
 
-1. 构建和安装 `pjproject`
+1. 构建和安装 [PJSIP][]
 
-   1. 安装 `pjproject` 的开发依赖包:
+   1. 安装 [PJSIP][] 的开发依赖包:
 
       1. 可使用系统包管理器安装的:
 
          ```bash
-         sudo apt install libssl-dev uuid-dev libopus-dev
+         sudo apt install libssl-dev uuid-dev
          ```
 
          > 说明:
          >
-         > - 如需使用 srtp, SIP over TLS 等网络安全特性，则安装 `libssl-dev`；否则不用。
+         > - 如需使用 `srtp`, `SIP over TLS` 等网络安全特性(**强烈推荐**)，则安装 `libssl-dev`；否则不用。
          >
-         > - 如需使用 `opus` 音频编码，则安装 `libopus-dev`；否则不用。
+         > - 其它编码，如需使用 `opus` 音频编码，则安装 `libopus-dev`；否则不用。
          >
          >   `opus` 是默认支持多 Channel Audio 的，而我们的 Mix 与 Resample 还没有为 multiple channels 做好准备，所以不建议使用！
 
@@ -97,7 +105,7 @@ configure 的时候，指定 `--disable-sound` 参数让 `pjproject` 使用“�
 
          - `bcg729`: 在之前的步骤中已经安装
 
-   1. 编译 `pjproject`
+   1. 编译 [PJSIP][]
 
       检出到最近的发布版(目前是 2.12)
 
@@ -110,7 +118,7 @@ configure 的时候，指定 `--disable-sound` 参数让 `pjproject` 使用“�
 
       > 注意:
       >
-      > - 使用 `--disable-sound` 参数，让 `pjproject` 使用“空声音设备”。这是这个项目所**必须**的。
+      > - 使用 `--disable-sound` 参数，让 [PJSIP][] 使用“空声音设备”。这是这个项目所**必须**的。
       > - 由于只需要音频部分，可关闭许多视频相关部分的配置
 
       完整的构建命令是:
@@ -120,7 +128,7 @@ configure 的时候，指定 `--disable-sound` 参数让 `pjproject` 使用“�
       make dep && make clean && make
       ```
 
-      本项目默认使用 `submodules/pjproject` 子目录的的相对路径静态链接 `pjproject`，故不必安装到系统。
+      本项目默认使用 `submodules/pjproject` 子目录的的相对路径静态链接 [PJSIP][]，故不必安装到系统。
 
 1. 构建该项目(`sipxsua` 执行文件)
 
@@ -151,9 +159,13 @@ configure 的时候，指定 `--disable-sound` 参数让 `pjproject` 使用“�
 可使用系统包管理器进行安装的:
 
 ```bash
-sudo apt install libssl1.1 libuuid1 libopus0 libsamplerate0 libgoogle-glog0v5
+sudo apt install libssl1.1 libuuid1 libsamplerate0 libgoogle-glog0v5
 ```
 
-> 说明:
->
-> `opus` 是默认支持多 Channel Audio 的，而我们的 Mix 与 Resample 还没有为 multiple channels 做好准备，所以不建议使用！
+其它？没写完。
+
+这个程序本身怎么发布？还没有想好，以后再说吧。
+
+[SIP]: https://www.ietf.org/rfc/rfc3261.txt "SIP: Session Initiation Protocol"
+[PJSIP]: https://www.pjsip.org/ "PJSIP is a free and open source multimedia communication library written in C language implementing standard based protocols such as SIP, SDP, RTP, STUN, TURN, and ICE. It combines signaling protocol (SIP) with rich multimedia framework and NAT traversal functionality into high level API that is portable and suitable for almost any type of systems ranging from desktops, embedded systems, to mobile handsets."
+[G.729]: https://www.itu.int/rec/T-REC-G.729 "G.729 : Coding of speech at 8 kbit/s using conjugate-structure algebraic-code-excited linear prediction (CS-ACELP)"
