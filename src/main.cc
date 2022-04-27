@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
                << "================ startup ================" << endl
                << "[0x" << hex << this_thread::get_id() << dec << "]"
                << " " << ossArgs.str() << endl
-               << "  version: " << getVersionString() << endl
+               << "version " << getVersionString() << endl
                << "^^^^^^^^^^^^^^^^ startup ^^^^^^^^^^^^^^^^" << endl;
 
   LOG(INFO) << "Create SIP library";

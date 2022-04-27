@@ -106,31 +106,22 @@ const string &getVersionString() {
 
   ostringstream oss;
 
-  oss << ": "
-#ifdef __GIT_DESC__
-      << "git " << __GIT_DESC__
-#else
-#endif
-      << " "
-#ifdef __GIT_REV__
+  oss << ""
+#if defined(__GIT_DESC__)
+      << __GIT_DESC__
+#elif defined(__GIT_REV__)
       << "rev " << __GIT_REV__ << ""
 #endif
-      << " " << PLATFORM << "/" << ARCHITECTURE << endl
-
-      << endl
-
-      << "  compiler:" << endl
+      << " (" << PLATFORM << "/" << ARCHITECTURE << ")" << endl
 #ifdef __GNUC__
-      << "    gcc " << __VERSION__
-#else
-      << "    unknown"
+      << "[GCC " << __VERSION__ << "]"
 #endif
       << endl
 
       << endl
 
       << "  with:" << endl
-      << "    pjsip " << PJ_VERSION << endl
+      << "    PJSIP " << PJ_VERSION << endl
       << "    " << src_get_version() << endl
 
       << endl
