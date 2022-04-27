@@ -100,7 +100,12 @@ void AudioMediaUdsReader::onBufferEof() {
 
 void AudioMediaUdsReader::read() {
   auto tsBegin = TClock::now();
-  CHECK_ERR(UdsReader::read(read_buffer0, buffer_size));
+  ssize_t n_bytes = UdsReader::read(read_buffer0, buffer_size);
+  if (n_bytes < 0) {
+    if (errno != EWOULDBLOCK) {
+      PCHECK(errno);
+    }
+  }
   {
     lock_guard<mutex> lk(buffer_mtx);
     memcpy(read_buffer, read_buffer0, buffer_size);
