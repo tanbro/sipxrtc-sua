@@ -3,6 +3,7 @@
 #include <glog/logging.h>
 #include <pjmedia/mem_port.h>
 
+#include "IpcFlags.hh"
 #include "SipXAccount.hh"
 #include "global.hh"
 
@@ -11,18 +12,11 @@ using namespace pj;
 
 namespace sipxsua {
 
-static pj_pool_factory pool_factory;
-
-SipXCall::SipXCall(Account &acc, int call_id) : Call(acc, call_id) {
-  pj_caching_pool_init(&cachingPool, NULL, 0);
-  pool = pj_pool_create(&cachingPool.factory, "SipXCall", 512, 512, NULL);
-  CHECK_NOTNULL(pool);
-  int accId = acc.getId();
-}
+SipXCall::SipXCall(Account &acc, int call_id) : Call(acc, call_id) {}
 
 SipXCall::~SipXCall() {
   auto ci = getInfo();
-  LOG(WARNING) << "~[" << ci.accId << "]"
+  LOG(WARNING) << "~ [" << ci.accId << "]"
                << "dtor "
                << "(" << getId() << "/" << ci.callIdString << ")";
   if (reader != nullptr) {
@@ -31,8 +25,6 @@ SipXCall::~SipXCall() {
   if (writer != nullptr) {
     delete writer;
   }
-  pj_pool_release(pool);
-  pj_caching_pool_destroy(&cachingPool);
 }
 
 mutex SipXCall::instancesMutex;
@@ -107,21 +99,23 @@ void SipXCall::onCallMediaState(OnCallMediaStateParam &prm) {
     delete reader;
     reader = nullptr;
   }
-  reader = new AudioMediaUdsReader("/tmp/sipxrtp-trtc.sock");
-  struct MediaFormatAudio rtcAuFmt;
-  rtcAuFmt.channelCount = 1;
-  rtcAuFmt.clockRate = 48000;
-  rtcAuFmt.bitsPerSample = 16;
-  rtcAuFmt.frameTimeUsec = 20000; // 20 毫秒
-  reader->createPlayer(rtcAuFmt, 48000, 20);
+  reader = new AudioMediaUdsReader(FLAGS_aud_capture_path);
+  struct MediaFormatAudio recvAudFmt;
+  recvAudFmt.channelCount = 1;
+  recvAudFmt.clockRate = FLAGS_aud_capture_samplerate;
+  recvAudFmt.bitsPerSample = 16;
+  recvAudFmt.frameTimeUsec = FLAGS_aud_capture_frametime * 1000; // 毫秒转微秒
+  reader->createPlayer(recvAudFmt);
 
   DVLOG(2) << "create UDS writer";
   if (writer != nullptr) {
     delete writer;
     writer = nullptr;
   }
-  writer = new AudioMediaUdsWriter("/tmp/sipxrtp-sua.sock");
-  writer->createRecorder(peerAuFmt, 48000, 20);
+  writer = new AudioMediaUdsWriter(FLAGS_aud_playback_path);
+  writer->createRecorder(peerAuFmt, FLAGS_aud_playback_samplerate,
+                         FLAGS_aud_playback_frametime,
+                         FLAGS_aud_playback_resample_level);
 
   /// [Playerback] reader ==> peer
   /// [Capture] peer ==> writer

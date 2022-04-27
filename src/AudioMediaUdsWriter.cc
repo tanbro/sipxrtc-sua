@@ -43,14 +43,14 @@ AudioMediaUdsWriter::~AudioMediaUdsWriter() {
 
 void AudioMediaUdsWriter::createRecorder(
     const pj::MediaFormatAudio &audioFormat, unsigned sampleRate,
-    unsigned bufferMSec) {
+    unsigned frameTimeMsec, int resampleLevel) {
   CHECK_EQ(PJSUA_INVALID_ID, id);
   // 只支持 Mono channel
   CHECK_EQ(1, audioFormat.channelCount) << "仅支持 mono channel audio";
   // 只支持 16bits sampling
   CHECK_EQ(16, audioFormat.bitsPerSample) << "仅支持 16bits PCM";
 
-  this->bufferMSec = bufferMSec;
+  this->frameTimeMsec = frameTimeMsec;
   this->audioFormat = audioFormat;
   this->sampleRate = sampleRate;
 
@@ -58,7 +58,7 @@ void AudioMediaUdsWriter::createRecorder(
   // 计算缓冲区大小
   size_t bytes_per_sec = audioFormat.clockRate * audioFormat.channelCount *
                          audioFormat.bitsPerSample / 8; // 每秒的字节数
-  buffer_size = bytes_per_sec * bufferMSec / 1000;
+  buffer_size = bytes_per_sec * frameTimeMsec / 1000;
   unsigned int samples_per_frame = audioFormat.clockRate *
                                    audioFormat.channelCount *
                                    audioFormat.frameTimeUsec / 1000000;
@@ -71,8 +71,7 @@ void AudioMediaUdsWriter::createRecorder(
   if (sampleRate != audioFormat.clockRate) {
     DVLOG(2) << "create resampler";
     int src_errno;
-    src_state =
-        src_new(SRC_SINC_FASTEST, audioFormat.channelCount, &src_errno);
+    src_state = src_new(resampleLevel, audioFormat.channelCount, &src_errno);
     CHECK_NOTNULL(src_state);
     CHECK_EQ(0, src_errno)
         << ": src_new() error in AudioMediaUdsWriter::createRecorder(). "
@@ -80,7 +79,7 @@ void AudioMediaUdsWriter::createRecorder(
     // 重采样率比例：output_sample_rate / input_sample_rate
     src_data.src_ratio = (double)sampleRate / (double)audioFormat.clockRate;
     // 计算输入数据的 frame(采样!) 个数！ (PJ一般是16bit) 的 PCM
-    src_data.input_frames = audioFormat.clockRate * bufferMSec / 1000;
+    src_data.input_frames = audioFormat.clockRate * frameTimeMsec / 1000;
     // 计算输出数据的 frame(采样!)个数
     src_data.output_frames =
         src_data.input_frames * sampleRate / audioFormat.clockRate;
@@ -107,7 +106,7 @@ void AudioMediaUdsWriter::createRecorder(
   DVLOG(1) << "createRecorder() ... " << endl
            << "  path=" << path << ", " << endl
            << "  fd=" << fd << ", " << endl
-           << "  buffer_msec=" << bufferMSec << ", " << endl
+           << "  frame_time_msec=" << frameTimeMsec << ", " << endl
            << "  buffer_size=" << buffer_size << ", " << endl
            << "  sample_rate=" << audioFormat.clockRate << ", " << endl
            << "  channel=" << audioFormat.channelCount << ", " << endl

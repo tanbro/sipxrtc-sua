@@ -32,10 +32,11 @@ public:
    * @param audioFormat 远端的来源音频媒体格式
    * @param sampleRate
    * 写出去的目标音频数据的采样率。如果和来源的不同，就会重采样
-   * @param bufferMSec 抓取远端音频媒体时，缓冲的时间
+   * @param frameTimeMsec 远端音频每个DGram的毫秒长度
    */
   void createRecorder(const pj::MediaFormatAudio &audioFormat,
-                      unsigned sampleRate, unsigned bufferMSec);
+                      unsigned sampleRate, unsigned frameTimeMsec,
+                      int resampleLevel);
 
   /**
    * @brief
@@ -54,7 +55,7 @@ protected:
    */
   unsigned sampleRate;
 
-  unsigned bufferMSec;
+  unsigned frameTimeMsec;
 
 private:
   pjmedia_port *port = NULL;

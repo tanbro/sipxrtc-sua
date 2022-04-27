@@ -6,6 +6,7 @@
 #include <cstring>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <thread>
 
 #include <pjsua2.hpp>
@@ -13,7 +14,8 @@
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
-#include "ArgsFlags.hh"
+#include "IpcFlags.hh"
+#include "SipFlags.hh"
 #include "SipXAccount.hh"
 #include "SipXCall.hh"
 #include "global.hh"
@@ -24,14 +26,22 @@ using namespace sipxsua;
 
 static bool interrupted = false;
 
+static int hand_sigs[] = {SIGINT, SIGTERM};
+
 static void sig_handler(int sig) {
-  LOG(WARNING) << "[0x" << hex << this_thread::get_id() << dec << "]"
-               << " "
-               << "sig_handler:" << sig;
+  LOG(WARNING) << "signal: 0x" << hex << sig;
+  for (int i = 0; i < (sizeof(hand_sigs) / sizeof(hand_sigs[0])); ++i) {
+    PCHECK(SIG_ERR != signal(hand_sigs[i], NULL));
+  }
   interrupted = true;
 }
 
 int main(int argc, char *argv[]) {
+  ostringstream ossArgs;
+  for (int i = 0; i < argc; ++i) {
+    ossArgs << argv[i] << " ";
+  }
+
   gflags::SetVersionString(getVersionString());
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);
@@ -39,7 +49,7 @@ int main(int argc, char *argv[]) {
   LOG(WARNING) << endl
                << "================ startup ================" << endl
                << "[0x" << hex << this_thread::get_id() << dec << "]"
-               << " " << argv[0] << endl
+               << " " << ossArgs.str() << endl
                << "  version: " << getVersionString() << endl
                << "^^^^^^^^^^^^^^^^ startup ^^^^^^^^^^^^^^^^" << endl;
 
@@ -157,7 +167,9 @@ int main(int argc, char *argv[]) {
   // }
 
   //////////////
-  PCHECK(SIG_ERR != signal(SIGINT, sig_handler));
+  for (int i = 0; i < (sizeof(hand_sigs) / sizeof(hand_sigs[0])); ++i) {
+    PCHECK(SIG_ERR != signal(hand_sigs[i], sig_handler));
+  }
   cout << "ctrl-c 退出" << endl;
 
   poller.runUntil(1000, 1000, []() { return !interrupted; });

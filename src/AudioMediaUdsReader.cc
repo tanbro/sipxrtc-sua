@@ -43,9 +43,8 @@ AudioMediaUdsReader::~AudioMediaUdsReader() {
   pj_caching_pool_destroy(&cachingPool);
 }
 
-void AudioMediaUdsReader::createPlayer(const pj::MediaFormatAudio &audioFormat,
-                                       unsigned sampleRate,
-                                       unsigned bufferMSec) {
+void AudioMediaUdsReader::createPlayer(
+    const pj::MediaFormatAudio &audioFormat) {
   CHECK_EQ(id, PJSUA_INVALID_ID) << ":不允许重复创建 player";
 
   // 只支持 Mono channel
@@ -54,13 +53,13 @@ void AudioMediaUdsReader::createPlayer(const pj::MediaFormatAudio &audioFormat,
   CHECK_EQ(16, audioFormat.bitsPerSample) << "仅支持 16bits sampling";
 
   this->audioFormat = audioFormat;
-  this->sampleRate = sampleRate;
 
   // 远端的声音媒体作为 source，获取它的格式规格
   // 计算缓冲区大小
   size_t bytes_per_sec = audioFormat.clockRate * audioFormat.channelCount *
                          audioFormat.bitsPerSample / 8; // 每秒的字节数
-  buffer_size = bytes_per_sec * bufferMSec / 1000;
+  size_t frame_time_msec = audioFormat.frameTimeUsec / 1000;
+  buffer_size = bytes_per_sec * frame_time_msec / 1000;
   unsigned int samples_per_frame = audioFormat.clockRate *
                                    audioFormat.channelCount *
                                    audioFormat.frameTimeUsec / 1000000;
@@ -74,7 +73,7 @@ void AudioMediaUdsReader::createPlayer(const pj::MediaFormatAudio &audioFormat,
   DVLOG(1) << "createPlayer() ... " << endl
            << "  path=" << path << ", " << endl
            << "  fd=" << fd << ", " << endl
-           << "  buffer_msec=" << bufferMSec << ", " << endl
+           << "  frame_time_msec=" << frame_time_msec << ", " << endl
            << "  buffer_size=" << buffer_size << ", " << endl
            << "  sample_rate=" << audioFormat.clockRate << ", " << endl
            << "  channel=" << audioFormat.channelCount << ", " << endl

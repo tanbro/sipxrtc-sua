@@ -75,7 +75,6 @@ set(SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/src)
 # 源文件列表
 set (SOURCES
   ${SRC_DIR}/main.cc
-  ${SRC_DIR}/global.cc
   ${SRC_DIR}/SipXAccount.cc
   ${SRC_DIR}/SipXCall.cc
   ${SRC_DIR}/UdsBase.cc
@@ -85,6 +84,9 @@ set (SOURCES
   ${SRC_DIR}/AudioMediaUdsWriter.cc
   ${SRC_DIR}/SuaLogWriter.cc
   ${SRC_DIR}/Poller.cc
+  ${SRC_DIR}/global.cc
+  ${SRC_DIR}/IpcFlags.cc
+  ${SRC_DIR}/SipFlags.cc
   ${SRC_DIR}/version.cc
 )
 

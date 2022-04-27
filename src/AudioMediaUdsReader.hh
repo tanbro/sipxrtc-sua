@@ -22,8 +22,7 @@ public:
   AudioMediaUdsReader(const std::string &path);
   virtual ~AudioMediaUdsReader();
 
-  void createPlayer(const pj::MediaFormatAudio &audioFormat,
-                    unsigned sampleRate, unsigned bufferMSec);
+  void createPlayer(const pj::MediaFormatAudio &audioFormat);
 
   void read();
 
@@ -32,10 +31,7 @@ protected:
    * @brief 源头音频格式信息
    */
   pj::MediaFormatAudio audioFormat;
-  /**
-   * @brief 目标音频采样率
-   */
-  unsigned sampleRate;
+
   void onBufferEof();
 
 private:

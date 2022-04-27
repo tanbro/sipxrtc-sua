@@ -42,7 +42,8 @@ void Poller::runUntil(int timeout, int interval, PollPred pred) {
   int rc;
   auto tp = TClock::now();
   while (1) {
-    if (refillFds()) {
+    refillFds();
+    if (nfds) {
       CHECK_ERR(rc = poll(fds, nfds, timeout));
       if (rc) {
         tp = TClock::now();
@@ -61,12 +62,14 @@ void Poller::runUntil(int timeout, int interval, PollPred pred) {
             lock_guard<mutex> lk(SipXCall::instancesMutex);
             auto reader = SipXCall::findReader(pfd.fd);
             if (reader) {
-              reader->read();
+              if (reader->getFd()) {
+                reader->read();
+              }
             }
           }
         } /// endfor
       } else {
-        // Timeout!
+        // poll timeout!
         this_thread::sleep_for(chrono::milliseconds(interval));
       }
     } else {
