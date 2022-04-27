@@ -24,8 +24,6 @@
 using namespace std;
 using namespace sipxsua;
 
-static bool interrupted = false;
-
 static int hand_sigs[] = {SIGINT, SIGTERM};
 
 static void sig_handler(int sig) {
@@ -152,32 +150,36 @@ int main(int argc, char *argv[]) {
   aud_dev_mgr.setNullDev();
   CHECK_EQ(0, aud_dev_mgr.getDevCount());
 
-  auto call = SipXCall::createCall(account);
+  LOG(INFO) << "Call " << FLAGS_dst_uri << " ...";
+  theCall = SipXCall::createCall(account);
   try {
     pj::CallOpParam cop(true); // Use default call settings
-    call->makeCall(FLAGS_dst_uri, cop);
+    theCall->makeCall(FLAGS_dst_uri, cop);
   } catch (pj::Error &err) {
-    cout << err.info() << endl;
-    LOG(ERROR) << "failed on makeCall(\"" << FLAGS_dst_uri << "\")"
+    LOG(FATAL) << "failed on makeCall(\"" << FLAGS_dst_uri << "\")"
                << " " << err.status << ": " << err.reason << endl
                << err.info();
   }
+  LOG(INFO) << "Call started";
 
-  //////////////
+  LOG(INFO) << "Set signal handlers";
   for (int i = 0; i < (sizeof(hand_sigs) / sizeof(hand_sigs[0])); ++i) {
     PCHECK(SIG_ERR != signal(hand_sigs[i], sig_handler));
   }
-  cout << "ctrl-c 退出" << endl;
 
+  LOG(INFO) << "Start polling";
   poller.runUntil(1000, 1000, []() { return !interrupted; });
 
-  //////////////////
-
+  /// DANGER: call's destructor here
+  // 显示的删除！防止 Call 在 PJ Lib 之后释放，引起的崩溃
+  if (!theCall->isActive()) {
+    LOG(WARNING) << "Reset the call pointer";
+    theCall.reset();
+  }
   LOG(WARNING) << "Hangup all calls";
   ep.hangupAllCalls();
   LOG(WARNING) << "Destroy SIP library";
   ep.libDestroy();
 
-  //////////////////
-  return 0;
+  return EXIT_SUCCESS;
 }

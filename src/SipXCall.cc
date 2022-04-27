@@ -1,5 +1,7 @@
 #include "SipXCall.hh"
 
+#include <csignal>
+
 #include <glog/logging.h>
 #include <pjmedia/mem_port.h>
 
@@ -12,19 +14,13 @@ using namespace pj;
 
 namespace sipxsua {
 
-SipXCall::SipXCall(Account &acc, int call_id) : Call(acc, call_id) {}
+SipXCall::SipXCall(Account &acc, int call_id) : Call(acc, call_id) {
+  _isIncoming = call_id != PJSUA_INVALID_ID;
+}
 
 SipXCall::~SipXCall() {
-  auto ci = getInfo();
-  LOG(WARNING) << "~ [" << ci.accId << "]"
-               << "dtor "
-               << "(" << getId() << "/" << ci.callIdString << ")";
-  if (reader != nullptr) {
-    delete reader;
-  }
-  if (writer != nullptr) {
-    delete writer;
-  }
+  LOG(INFO) << "~ dtor " << getId();
+  destroyPlayerAndRecorder();
 }
 
 mutex SipXCall::instancesMutex;
@@ -72,8 +68,15 @@ void SipXCall::onCallState(OnCallStateParam &prm) {
             << ci.state << " " << ci.stateText;
 
   if (ci.state == PJSIP_INV_STATE_DISCONNECTED) {
-    /// TODO: Schedule/Dispatch call deletion to another thread here
+    /// ATTENTION: Schedule/Dispatch call deletion to another thread here
     internalReleaseCall(this);
+    if (this == theCall.get()) {
+      LOG(WARNING) << "[" << ci.accId << "]"
+                   << " "
+                   << "(" << getId() << "/" << ci.callIdString
+                   << "): The outgoing call ended!";
+      interrupted = true;
+    }
   }
 }
 
@@ -95,10 +98,8 @@ void SipXCall::onCallMediaState(OnCallMediaStateParam &prm) {
             << "  avg_bps=" << peerAuFmt.avgBps << "\n"
             << "  max_bps=" << peerAuFmt.maxBps;
 
-  if (reader != nullptr) {
-    delete reader;
-    reader = nullptr;
-  }
+  destroyPlayerAndRecorder();
+
   reader = new AudioMediaUdsReader(FLAGS_aud_capture_path);
   struct MediaFormatAudio recvAudFmt;
   recvAudFmt.channelCount = 1;
@@ -107,11 +108,6 @@ void SipXCall::onCallMediaState(OnCallMediaStateParam &prm) {
   recvAudFmt.frameTimeUsec = FLAGS_aud_capture_frametime * 1000; // 毫秒转微秒
   reader->createPlayer(recvAudFmt);
 
-  DVLOG(2) << "create UDS writer";
-  if (writer != nullptr) {
-    delete writer;
-    writer = nullptr;
-  }
   writer = new AudioMediaUdsWriter(FLAGS_aud_playback_path);
   writer->createRecorder(peerAuFmt, FLAGS_aud_playback_samplerate,
                          FLAGS_aud_playback_frametime,
@@ -124,6 +120,19 @@ void SipXCall::onCallMediaState(OnCallMediaStateParam &prm) {
   DVLOG(2) << "UDS Writer startTransmit";
   peerMedia.startTransmit(*writer);
 }
+
+void SipXCall::destroyPlayerAndRecorder() {
+  if (reader) {
+    delete reader;
+    reader = nullptr;
+  }
+  if (writer) {
+    delete writer;
+    writer = nullptr;
+  }
+}
+
+bool SipXCall::isIncoming() { return _isIncoming; }
 
 AudioMediaUdsReader *SipXCall::getReader() { return reader; }
 

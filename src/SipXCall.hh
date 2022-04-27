@@ -14,6 +14,9 @@
 namespace sipxsua {
 
 class SipXCall : public pj::Call {
+private:
+  bool _isIncoming;
+
 public:
   SipXCall(pj::Account &acc, int callId = PJSUA_INVALID_ID);
   ~SipXCall();
@@ -26,6 +29,8 @@ public:
 
   AudioMediaUdsReader *getReader();
   AudioMediaUdsWriter *getWriter();
+
+  bool isIncoming();
 
   static std::set<int> getAllFds();
   static std::mutex instancesMutex;
@@ -56,6 +61,7 @@ public:
   static AudioMediaUdsWriter *findWriter(int fd);
 
 private:
+  void destroyPlayerAndRecorder();
   static bool internalReleaseCall(SipXCall *p);
 
   pj_caching_pool cachingPool;
