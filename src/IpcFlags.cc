@@ -24,6 +24,8 @@ DEFINE_validator(aud_capture_path, &valide_path);
 DEFINE_uint32(aud_capture_samplerate, 48000, "拾音的采样率");
 DEFINE_uint32(aud_capture_frametime, 20, "拾音的frame时长(milli)");
 
+DEFINE_string(event_fifo, "", "向这个 FIFO 发送事件通知");
+
 bool valide_path(const char *flagname, const std::string &value) {
   if (FLAGS_list_codecs)
     return true;

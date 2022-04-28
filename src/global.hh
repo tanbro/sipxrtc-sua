@@ -5,6 +5,7 @@
 
 #include <pjsua2.hpp>
 
+#include "EventPub.hh"
 #include "Poller.hh"
 #include "SipXAccount.hh"
 #include "SipXCall.hh"
@@ -24,6 +25,8 @@ extern SipXAccount account;
 extern std::shared_ptr<SipXCall> theCall;
 
 extern Poller poller;
+
+extern EventPub *eventPub;
 
 extern SuaLogWriter suaLogWriter;
 

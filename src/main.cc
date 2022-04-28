@@ -15,6 +15,7 @@
 #include <glog/logging.h>
 
 #include "AppFlags.hh"
+#include "IpcFlags.hh"
 #include "SipFlags.hh"
 #include "SipXAccount.hh"
 #include "SipXCall.hh"
@@ -102,6 +103,12 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
+  if (!FLAGS_event_fifo.empty()) {
+    LOG(INFO) << "create event fifo publisher";
+    eventPub = new EventPub(FLAGS_event_fifo);
+    eventPub->open();
+  }
+
   // Create SIP transport. Error handling sample is shown
   LOG(INFO) << "Create SIP transport";
   {
@@ -130,8 +137,6 @@ int main(int argc, char *argv[]) {
   VLOG(1) << ">>> pj::Endpoint::libStart()";
   ep.libStart();
   VLOG(1) << "<<< pj::Endpoint::libStart()";
-
-  string line;
 
   LOG(INFO) << "Create default local SIP account";
   {
@@ -178,6 +183,11 @@ int main(int argc, char *argv[]) {
   }
   LOG(WARNING) << "Destroy SIP library";
   ep.libDestroy();
+
+  if (eventPub) {
+    LOG(INFO) << "delete event fifo publisher";
+    delete eventPub;
+  }
 
   return EXIT_SUCCESS;
 }

@@ -12,4 +12,6 @@ DECLARE_string(aud_capture_path);
 DECLARE_uint32(aud_capture_samplerate);
 DECLARE_uint32(aud_capture_frametime);
 
+DECLARE_string(event_fifo);
+
 #endif

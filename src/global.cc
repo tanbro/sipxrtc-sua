@@ -13,6 +13,8 @@ std::shared_ptr<SipXCall> theCall = nullptr;
 
 Poller poller;
 
+EventPub *eventPub = nullptr;
+
 SuaLogWriter suaLogWriter;
 
 } // namespace sipxsua

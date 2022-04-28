@@ -68,6 +68,12 @@ void SipXCall::onCallState(OnCallStateParam &prm) {
             << "(" << getId() << "/" << ci.callIdString << "): CallState ... "
             << ci.state << " " << ci.stateText;
 
+  if (eventPub) {
+    ostringstream oss;
+    oss << "onCallState: " << ci.state << " " << ci.stateText;
+    eventPub->pub(oss.str());
+  }
+
   if (ci.state == PJSIP_INV_STATE_DISCONNECTED) {
     /// ATTENTION: Schedule/Dispatch call deletion to another thread here
     /// `theCall` 是全局的 shared_ptr，不会自动释放！
@@ -95,6 +101,12 @@ void SipXCall::onCallMediaState(OnCallMediaStateParam &prm) {
             << "  sample_rate=" << peerAuFmt.clockRate << "\n"
             << "  avg_bps=" << peerAuFmt.avgBps << "\n"
             << "  max_bps=" << peerAuFmt.maxBps;
+
+  if (eventPub) {
+    ostringstream oss;
+    oss << "onCallMediaState: " << ci.state << " " << ci.stateText;
+    eventPub->pub(oss.str());
+  }
 
   destroyPlayerAndRecorder();
 
