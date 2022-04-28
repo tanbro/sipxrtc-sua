@@ -25,7 +25,6 @@ using namespace std;
 using namespace sipxsua;
 
 static int hand_sigs[] = {SIGINT, SIGTERM};
-static bool is_call_made = false;
 
 static void sig_handler(int sig) {
   LOG(WARNING) << "signal: 0x" << hex << sig;
@@ -161,7 +160,6 @@ int main(int argc, char *argv[]) {
                << " " << err.status << ": " << err.reason << endl
                << err.info();
   }
-  is_call_made = true;
   LOG(INFO) << "Call started";
 
   LOG(INFO) << "Set signal handlers";
@@ -174,13 +172,9 @@ int main(int argc, char *argv[]) {
 
   LOG(WARNING) << "Hangup all calls";
   ep.hangupAllCalls();
-  // 显式的删除！防止 Call 在 PJ Lib 之后释放，引起的崩溃
-  if (is_call_made) {
-    if (!theCall->isActive()) {
-      /// DANGER: call's destructor here
-      LOG(WARNING) << "Reset the call pointer";
-      theCall.reset();
-    }
+  // theCall 要显式的删除！防止 Call 在 PJ Lib 之后释放，引起的崩溃
+  if (theCall) {
+    theCall = nullptr;
   }
   LOG(WARNING) << "Destroy SIP library";
   ep.libDestroy();
