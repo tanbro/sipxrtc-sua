@@ -156,7 +156,6 @@ int main(int argc, char *argv[]) {
   CHECK_EQ(0, aud_dev_mgr.getDevCount());
 
   LOG(INFO) << "Call " << FLAGS_dst_uri << " ...";
-  theCall = SipXCall::createCall(account);
   try {
     pj::CallOpParam cop(true); // Use default call settings
     theCall->makeCall(FLAGS_dst_uri, cop);

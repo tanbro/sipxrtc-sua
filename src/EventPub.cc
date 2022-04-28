@@ -46,7 +46,11 @@ void EventPub::pub(const string &msg) {
   CHECK_GT(PIPE_BUF, msg.length());
   char *buf = (char *)calloc(msg.length() + 1, sizeof(char));
   strncpy(buf, msg.c_str(), msg.length());
-  CHECK_ERR(::write(_fd, buf, msg.length() + 1));
+  VLOG(1) << "pub: " << buf;
+  {
+    lock_guard<mutex> lk(_mtx);
+    CHECK_ERR(::write(_fd, buf, msg.length() + 1));
+  }
   free(buf);
 }
 

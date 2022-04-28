@@ -1,6 +1,7 @@
 #ifndef __sipxsua_EventPub_h__
 #define __sipxsua_EventPub_h__ 1
 
+#include <mutex>
 #include <string>
 
 namespace sipxsua {
@@ -20,6 +21,7 @@ public:
 private:
   std::string _path;
   int _fd = -1;
+  std::mutex _mtx;
 };
 
 }; // namespace sipxsua
