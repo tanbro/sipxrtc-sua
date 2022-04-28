@@ -2,6 +2,7 @@
 
 #include <fcntl.h>
 
+#include <cerrno>
 #include <climits>
 #include <cstdio>
 #include <cstring>
@@ -24,9 +25,10 @@ EventPub::~EventPub() {
 
 int EventPub::open() {
   CHECK_GT(0, _fd);
+  struct stat statbuf;
   LOG(INFO) << "open(\"" << _path << "\") ... ";
   CHECK_ERR(_fd = ::open(_path.c_str(), O_WRONLY | O_NONBLOCK));
-  LOG(INFO) << "fd: " << _fd;
+  LOG(INFO) << _fd << ":" << _path;
   return _fd;
 }
 
