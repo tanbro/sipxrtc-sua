@@ -12,6 +12,18 @@ using namespace std;
 
 namespace sipxsua {
 
+UdsReader::UdsReader(const std::string &path) : path(path) {
+  memset(&addr, 0, sizeof(addr));
+  addr.sun_family = AF_UNIX;
+  strncpy(addr.sun_path, path.c_str(), sizeof(addr.sun_path) - 1);
+}
+
+UdsReader::~UdsReader() {
+  if (!(fd < 0)) {
+    close();
+  }
+}
+
 int UdsReader::open() {
   UdsBase::open();
   struct stat statbuf;
@@ -27,14 +39,9 @@ void UdsReader::close() {
   UdsBase::close();
   struct stat statbuf;
   if (!stat(addr.sun_path, &statbuf)) {
+    LOG(INFO) << "unlink " << path;
     CHECK_ERR(unlink(addr.sun_path));
   }
-}
-
-UdsReader::UdsReader(const std::string &path) : path(path) {
-  memset(&addr, 0, sizeof(addr));
-  addr.sun_family = AF_UNIX;
-  strncpy(addr.sun_path, path.c_str(), sizeof(addr.sun_path) - 1);
 }
 
 ssize_t UdsReader::read(void *data, size_t length) {

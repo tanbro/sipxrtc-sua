@@ -12,6 +12,7 @@ namespace sipxsua {
 class UdsReader : public UdsBase {
 public:
   UdsReader(const std::string &path);
+  virtual ~UdsReader() override;
 
   virtual ssize_t read(void *data, size_t length);
 
