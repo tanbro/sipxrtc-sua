@@ -108,33 +108,31 @@ void SipXCall::onCallMediaState(OnCallMediaStateParam &prm) {
     eventPub->pub(oss.str());
   }
 
-  // destroyPlayerAndRecorder();
+  destroyPlayerAndRecorder();
 
-  if (reader == nullptr) {
-    VLOG(1) << "create UdsReader";
-    reader = new AudioMediaUdsReader(FLAGS_aud_capture_path);
-    struct MediaFormatAudio recvAudFmt;
-    recvAudFmt.channelCount = 1;
-    recvAudFmt.clockRate = FLAGS_aud_capture_samplerate;
-    recvAudFmt.bitsPerSample = 16;
-    recvAudFmt.frameTimeUsec = FLAGS_aud_capture_frametime * 1000; // 毫秒转微秒
-    reader->createPlayer(recvAudFmt);
-    DVLOG(2) << "UdsReader startTransmit";
-    reader->startTransmit(peerMedia);
-  }
+  VLOG(1) << "create UdsReader";
+  reader = new AudioMediaUdsReader(FLAGS_aud_capture_path);
+  struct MediaFormatAudio recvAudFmt;
+  recvAudFmt.channelCount = 1;
+  recvAudFmt.clockRate = FLAGS_aud_capture_samplerate;
+  recvAudFmt.bitsPerSample = 16;
+  recvAudFmt.frameTimeUsec = FLAGS_aud_capture_frametime * 1000; // 毫秒转微秒
+  reader->createPlayer(recvAudFmt);
 
-  if (writer == nullptr) {
-    VLOG(1) << "create UdsWriter";
-    writer = new AudioMediaUdsWriter(FLAGS_aud_playback_path);
-    writer->createRecorder(peerAuFmt, FLAGS_aud_playback_samplerate,
-                           FLAGS_aud_playback_frametime,
-                           FLAGS_aud_playback_resample_level);
-    DVLOG(2) << "UdsWriter startTransmit";
-    peerMedia.startTransmit(*writer);
-  }
+  VLOG(1) << "create UdsWriter";
+  writer = new AudioMediaUdsWriter(FLAGS_aud_playback_path);
+  writer->createRecorder(peerAuFmt, FLAGS_aud_playback_samplerate,
+                         FLAGS_aud_playback_frametime,
+                         FLAGS_aud_playback_resample_level);
 
   /// [Playerback] reader ==> peer
   /// [Capture] peer ==> writer
+
+  DVLOG(2) << "UdsReader startTransmit";
+  reader->startTransmit(peerMedia);
+
+  DVLOG(2) << "UdsWriter startTransmit";
+  peerMedia.startTransmit(*writer);
 }
 
 void SipXCall::destroyPlayerAndRecorder() {

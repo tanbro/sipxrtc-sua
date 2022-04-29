@@ -32,6 +32,7 @@ int UdsReader::open() {
     CHECK_ERR(unlink(addr.sun_path));
   }
   CHECK_ERR(bind(fd, (const sockaddr *)&addr, sizeof(addr)));
+  LOG(INFO) << "bind " << fd << ":" << path;
   return fd;
 }
 

@@ -112,6 +112,7 @@ void AudioMediaUdsReader::read() {
   }
   TDuration elapsed = TClock::now() - tsBegin;
   VLOG_EVERY_N(3, 100) << "read()"
+                       << " " << n_bytes << " bytes"
                        << " "
                        << "elapsed = " << elapsed.count() << " usec";
 }

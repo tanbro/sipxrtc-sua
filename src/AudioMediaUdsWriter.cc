@@ -177,6 +177,7 @@ void AudioMediaUdsWriter::write() {
   UdsWriter::write((void *)buffer, length);
   TDuration elapsed = TClock::now() - tsBegin;
   VLOG_EVERY_N(3, 100) << "write()"
+                       << " " << length << " bytes"
                        << " "
                        << "elapsed = " << elapsed.count() << " usec";
 }
