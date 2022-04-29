@@ -153,23 +153,18 @@ int main(int argc, char *argv[]) {
   aud_dev_mgr.setNullDev();
   CHECK_EQ(0, aud_dev_mgr.getDevCount());
 
-  // LOG(INFO) << "Call " << FLAGS_dst_uri << " ...";
-  // theCall = SipXCall::createCall(account);
-  // try {
-  //   pj::CallOpParam cop(true); // Use default call settings
-  //   theCall->makeCall(FLAGS_dst_uri, cop);
-  // } catch (pj::Error &err) {
-  //   LOG(FATAL) << "failed on makeCall(\"" << FLAGS_dst_uri << "\")"
-  //              << " " << err.status << ": " << err.reason << endl
-  //              << err.info();
-  // }
-  // LOG(INFO) << "Call started";
-
   LOG(INFO) << "Call " << FLAGS_dst_uri << " ...";
   theCall = SipXCall::createCall(account);
-  pj::CallOpParam cop(true); // Use default call settings
-  theCall->makeCall(FLAGS_dst_uri, cop);
+  try {
+    pj::CallOpParam cop(true); // Use default call settings
+    theCall->makeCall(FLAGS_dst_uri, cop);
+  } catch (pj::Error &err) {
+    LOG(FATAL) << "failed on makeCall(\"" << FLAGS_dst_uri << "\")"
+               << " " << err.status << ": " << err.reason << endl
+               << err.info();
+  }
   LOG(INFO) << "Call started";
+
   /// IMPORTANT: “呼叫开始” 方认为启动成功！
   eventPub->pub("CallStarted");
 
@@ -194,6 +189,8 @@ int main(int argc, char *argv[]) {
     LOG(INFO) << "delete event fifo publisher";
     delete eventPub;
   }
+
+  LOG(WARNING) << "terminated";
 
   return EXIT_SUCCESS;
 }
