@@ -59,7 +59,6 @@ int main(int argc, char *argv[]) {
   LOG(INFO) << "Initialize SIP endpoint";
   {
     pj::EpConfig cfg;
-    cfg.uaConfig.maxCalls = 1;
     if (FLAGS_sip_log_level >= 0) {
       cfg.logConfig.level = FLAGS_sip_log_level;
     }
