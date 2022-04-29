@@ -33,13 +33,13 @@ option(
 )
 
 option(
-  WITH_G729
+  WITH_BCG729
   "Whether to use libbcg729. When static link pjproject, and the audio codec is enabled in it, the option must be \"ON\" here"
   ON
 )
 option(
-  WITH_G729_STATIC
-  "Whether to link libbcg729 staticly. Only avaiable when `WITH_G729` is \"ON\""
+  WITH_BCG729_STATIC
+  "Whether to use bcg729's static library in CMakeLists.txt directly, or try to find it by pkg-congif. Only avaiable when `WITH_BCG729` is \"ON\""
   ON
 )
 
@@ -223,11 +223,12 @@ if (${WITH_PJ_STATIC})
   endif ()
 
   # g729
-  if (${WITH_G729})
-    pkg_check_modules(LIBBCG729 REQUIRED libbcg729)
-    if (${WITH_G729_STATIC})
-      target_link_libraries(${PROJECT_NAME} ${LIBBCG729_LIBRARIES}.a)
+  if (${WITH_BCG729})
+    if (${WITH_BCG729_STATIC})
+      add_subdirectory(submodules/bcg729)
+      target_link_libraries(${PROJECT_NAME} bcg729-static)
     else()
+      pkg_check_modules(LIBBCG729 REQUIRED libbcg729)
       target_link_libraries(${PROJECT_NAME} ${LIBBCG729_LIBRARIES})
       target_include_directories(${PROJECT_NAME} PRIVATE ${LIBBCG729_INCLUDE_DIRS})
       target_compile_options(${PROJECT_NAME} PRIVATE ${LIBBCG729_CFLAGS})
