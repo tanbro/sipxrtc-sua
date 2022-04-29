@@ -48,7 +48,7 @@ void Poller::runUntil(int timeout, int interval, PollPred pred) {
       rc = poll(fds, nfds, timeout);
       if (rc < 0) {
         // ERROR, but except "Interrupted system call [4]"
-        if (rc == EINTR) {
+        if (errno == EINTR) {
           LOG(ERROR) << strerror(errno) << " [" << errno << "]";
         } else {
           CHECK_ERR(rc);
