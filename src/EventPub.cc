@@ -25,14 +25,13 @@ EventPub::~EventPub() {
 
 int EventPub::open() {
   CHECK_GT(0, _fd);
-  struct stat statbuf;
-  LOG(INFO) << "open(\"" << _path << "\") ... ";
   CHECK_ERR(_fd = ::open(_path.c_str(), O_WRONLY | O_NONBLOCK));
-  LOG(INFO) << _fd << ":" << _path;
+  LOG(INFO) << "open " << _fd << ":" << _path;
   return _fd;
 }
 
 void EventPub::close() {
+  LOG(INFO) << "close " << _fd << ":" << _path;
   CHECK_LE(0, _fd);
   CHECK_ERR(::close(_fd));
   _fd = -1;
