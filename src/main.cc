@@ -7,7 +7,6 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <thread>
 
 #include <pjsua2.hpp>
 
@@ -47,7 +46,6 @@ int main(int argc, char *argv[]) {
 
   LOG(WARNING) << endl
                << "================ startup ================" << endl
-               << "[0x" << hex << this_thread::get_id() << dec << "]"
                << " " << ossArgs.str() << endl
                << "version " << getVersionString() << endl
                << "^^^^^^^^^^^^^^^^ startup ^^^^^^^^^^^^^^^^" << endl;
@@ -61,6 +59,7 @@ int main(int argc, char *argv[]) {
   LOG(INFO) << "Initialize SIP endpoint";
   {
     pj::EpConfig cfg;
+    cfg.uaConfig.maxCalls = 1;
     if (FLAGS_sip_log_level >= 0) {
       cfg.logConfig.level = FLAGS_sip_log_level;
     }
@@ -155,16 +154,22 @@ int main(int argc, char *argv[]) {
   aud_dev_mgr.setNullDev();
   CHECK_EQ(0, aud_dev_mgr.getDevCount());
 
+  // LOG(INFO) << "Call " << FLAGS_dst_uri << " ...";
+  // theCall = SipXCall::createCall(account);
+  // try {
+  //   pj::CallOpParam cop(true); // Use default call settings
+  //   theCall->makeCall(FLAGS_dst_uri, cop);
+  // } catch (pj::Error &err) {
+  //   LOG(FATAL) << "failed on makeCall(\"" << FLAGS_dst_uri << "\")"
+  //              << " " << err.status << ": " << err.reason << endl
+  //              << err.info();
+  // }
+  // LOG(INFO) << "Call started";
+
   LOG(INFO) << "Call " << FLAGS_dst_uri << " ...";
   theCall = SipXCall::createCall(account);
-  try {
-    pj::CallOpParam cop(true); // Use default call settings
-    theCall->makeCall(FLAGS_dst_uri, cop);
-  } catch (pj::Error &err) {
-    LOG(FATAL) << "failed on makeCall(\"" << FLAGS_dst_uri << "\")"
-               << " " << err.status << ": " << err.reason << endl
-               << err.info();
-  }
+  pj::CallOpParam cop(true); // Use default call settings
+  theCall->makeCall(FLAGS_dst_uri, cop);
   LOG(INFO) << "Call started";
 
   LOG(INFO) << "Set signal handlers";
