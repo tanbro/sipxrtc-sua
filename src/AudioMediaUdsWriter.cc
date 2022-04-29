@@ -21,9 +21,7 @@ AudioMediaUdsWriter::AudioMediaUdsWriter(const string &path)
   pool = pj_pool_create(&cachingPool.factory, "AudioMediaUdsWriter", 8192, 8192,
                         NULL);
   CHECK_NOTNULL(pool);
-  //
   open();
-  DLOG(INFO) << "activated! fd=" << fd;
 }
 
 AudioMediaUdsWriter::~AudioMediaUdsWriter() {
@@ -128,7 +126,7 @@ void AudioMediaUdsWriter::createRecorder(
   // 如果上面一步失败，就不会产生有效的 media id.
   // C++ way： 把 Port 加入到 conf，并接收新的 port id 到这个类的 id 属性
   registerMediaPort2(port, pool);
-  DVLOG(1) << "createRecorder() ... id=" << id;
+  LOG(INFO) << "Recorder[" << id << "]==>" << fd << "==>" << path;
 }
 
 void AudioMediaUdsWriter::cb_mem_capture_eof(pjmedia_port *port,

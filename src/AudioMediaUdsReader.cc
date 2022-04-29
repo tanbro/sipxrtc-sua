@@ -31,7 +31,6 @@ AudioMediaUdsReader::AudioMediaUdsReader(const string &path)
   CHECK_NOTNULL(pool);
   //
   open();
-  DLOG(INFO) << "activated! fd=" << fd;
 }
 
 AudioMediaUdsReader::~AudioMediaUdsReader() {
@@ -89,7 +88,7 @@ void AudioMediaUdsReader::createPlayer(
   // 如果上面一步失败，就不会产生有效的 media id.
   // C++ way： 把 Port 加入到 conf，并接收新的 port id 到这个类的 id 属性
   registerMediaPort2(port, pool);
-  DVLOG(1) << "createPlayer() ... id=" << id;
+  LOG(INFO) << "Player[" << id << "]<==" << fd << "<==" << path;
 }
 
 void AudioMediaUdsReader::onBufferEof() {
