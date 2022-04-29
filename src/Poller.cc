@@ -1,5 +1,6 @@
 #include "Poller.hh"
 
+#include <cerrno>
 #include <chrono>
 #include <cstring>
 #include <thread>
@@ -44,7 +45,15 @@ void Poller::runUntil(int timeout, int interval, PollPred pred) {
   while (1) {
     refillFds();
     if (nfds) {
-      CHECK_ERR(rc = poll(fds, nfds, timeout));
+      rc = poll(fds, nfds, timeout);
+      if (rc < 0) {
+        // ERROR, but except "Interrupted system call [4]"
+        if (rc == EINTR) {
+          LOG(ERROR) << strerror(errno) << " [" << errno << "]";
+        } else {
+          CHECK_ERR(rc);
+        }
+      }
       if (rc) {
         tp = TClock::now();
         for (int i = 0; i < rc; ++i) {
