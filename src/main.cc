@@ -171,6 +171,8 @@ int main(int argc, char *argv[]) {
   pj::CallOpParam cop(true); // Use default call settings
   theCall->makeCall(FLAGS_dst_uri, cop);
   LOG(INFO) << "Call started";
+  /// IMPORTANT: “呼叫开始” 方认为启动成功！
+  eventPub->pub("CallStarted");
 
   LOG(INFO) << "Set signal handlers";
   for (int i = 0; i < (sizeof(hand_sigs) / sizeof(hand_sigs[0])); ++i) {
