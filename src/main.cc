@@ -165,13 +165,13 @@ int main(int argc, char *argv[]) {
   }
   LOG(INFO) << "Call started";
 
-  /// IMPORTANT: “呼叫开始” 方认为启动成功！
-  eventPub->pub("CallStarted");
-
   LOG(INFO) << "Set signal handlers";
   for (int i = 0; i < (sizeof(hand_sigs) / sizeof(hand_sigs[0])); ++i) {
     PCHECK(SIG_ERR != signal(hand_sigs[i], sig_handler));
   }
+
+  /// IMPORTANT: “呼叫开始” 方认为启动成功！
+  eventPub->pub("CallStarted");
 
   LOG(INFO) << "Start polling";
   poller.runUntil(1000, 1000, []() { return !interrupted; });
