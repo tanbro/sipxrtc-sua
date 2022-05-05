@@ -41,14 +41,15 @@ int EventPub::getFd() { return _fd; }
 
 void EventPub::pub(const string &msg) {
   CHECK_LE(0, _fd);
-  string s = trimStr(msg) + "\n";
-  CHECK_GT(PIPE_BUF, msg.length());
-  char *buf = (char *)calloc(msg.length() + 1, sizeof(char));
-  strncpy(buf, msg.c_str(), msg.length());
+  ostringstream oss;
+  oss << trimStr(msg) << endl;
+  CHECK_GT(PIPE_BUF, oss.str().length());
+  char *buf = (char *)calloc(oss.str().length() + 1, sizeof(char));
+  strncpy(buf, oss.str().c_str(), oss.str().length());
   VLOG(1) << "pub: " << buf;
   {
     lock_guard<mutex> lk(_mtx);
-    CHECK_ERR(::write(_fd, buf, msg.length() + 1));
+    CHECK_ERR(::write(_fd, buf, oss.str().length() + 1));
   }
   free(buf);
 }
