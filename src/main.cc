@@ -24,7 +24,7 @@
 using namespace std;
 using namespace sipxsua;
 
-static int hand_sigs[] = {SIGINT, SIGTERM};
+static int hand_sigs[] = {SIGTERM, SIGINT, SIGQUIT, SIGHUP};
 
 static void sig_handler(int sig) {
   LOG(WARNING) << "signal: 0x" << hex << sig;
