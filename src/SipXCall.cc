@@ -66,7 +66,14 @@ void SipXCall::onCallState(OnCallStateParam &prm) {
   LOG(INFO) << "[" << ci.accId << "]"
             << " "
             << "(" << getId() << "/" << ci.callIdString << "): CallState ... "
-            << ci.state << " " << ci.stateText;
+
+            << " " << ci.state
+
+            << " " << ci.stateText
+
+            << " " << ci.lastStatusCode
+
+            << " " << ci.lastReason;
 
   if (eventPub) {
     ostringstream oss;
@@ -113,7 +120,15 @@ void SipXCall::onCallMediaState(OnCallMediaStateParam &prm) {
 
   if (eventPub) {
     ostringstream oss;
-    oss << "onCallMediaState: " << ci.state << " " << ci.stateText;
+    oss << "onCallMediaState: "
+
+        << " " << ci.state
+
+        << " " << ci.stateText
+
+        << " " << ci.lastStatusCode
+
+        << " " << ci.lastReason;
     eventPub->pub(oss.str());
   }
 

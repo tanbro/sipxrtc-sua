@@ -27,7 +27,7 @@ using namespace sipxsua;
 static int hand_sigs[] = {SIGTERM, SIGINT, SIGQUIT, SIGHUP};
 
 static void sig_handler(int sig) {
-  LOG(WARNING) << "signal: 0x" << hex << sig;
+  LOG(WARNING) << "signal: " << strsignal(sig);
   for (int i = 0; i < (sizeof(hand_sigs) / sizeof(hand_sigs[0])); ++i) {
     PCHECK(SIG_ERR != signal(hand_sigs[i], NULL));
   }
