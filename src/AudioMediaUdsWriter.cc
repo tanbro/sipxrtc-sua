@@ -67,7 +67,7 @@ void AudioMediaUdsWriter::createRecorder(
 
   // 新建 resampler
   if (sampleRate != audioFormat.clockRate) {
-    DVLOG(2) << "create resampler";
+    DVLOG(1) << "create resampler. level=" << resampleLevel;
     int src_errno;
     src_state = src_new(resampleLevel, audioFormat.channelCount, &src_errno);
     CHECK_NOTNULL(src_state);
