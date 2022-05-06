@@ -15,7 +15,7 @@ DEFINE_validator(aud_playback_path, &valide_path);
 DEFINE_uint32(aud_playback_samplerate, 48000, "放音的采样率");
 DEFINE_uint32(aud_playback_frametime, 20, "放音的frame时长(milli)");
 DEFINE_uint32(
-    aud_playback_resample_level, SRC_LINEAR,
+    aud_playback_resample_level, SRC_ZERO_ORDER_HOLD,
     "放音的重采样(如有必要)级别(0=best/slowest ... 4=poorest/fastest)");
 DEFINE_validator(aud_playback_resample_level, &valide_resample_level);
 
