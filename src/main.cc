@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
   }
 
   /// IMPORTANT: “呼叫开始” 方认为启动成功！
-  eventPub->pub("CallStarted");
+  eventPub->pub("onCreateCall");
 
   LOG(INFO) << "Start polling";
   poller.runUntil(1000, 1000, []() { return !interrupted; });
