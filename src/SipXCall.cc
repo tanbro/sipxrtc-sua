@@ -70,7 +70,16 @@ void SipXCall::onCallState(OnCallStateParam &prm) {
 
   if (eventPub) {
     ostringstream oss;
-    oss << "onCallState: " << ci.state << " " << ci.stateText;
+    oss << "onCallState:"
+
+        << " " << ci.state
+
+        << " " << ci.stateText
+
+        << " " << ci.lastStatusCode
+
+        << " " << ci.lastReason;
+
     eventPub->pub(oss.str());
   }
 
