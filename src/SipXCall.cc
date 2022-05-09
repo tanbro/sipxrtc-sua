@@ -124,6 +124,7 @@ void SipXCall::onCallMediaState(OnCallMediaStateParam &prm) {
     eventPub->pub(oss.str());
   }
 
+  // 猜测：在 Media 改变之后，需要重复创建方可成功桥接
   destroyPlayerAndRecorder();
 
   VLOG(1) << "create UdsReader";
