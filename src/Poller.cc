@@ -39,7 +39,7 @@ int Poller::refillFds() {
   return i;
 }
 
-void Poller::runUntil(int timeout, int interval, PollPred pred) {
+void Poller::runUntil(int timeout, int interval, function<bool()> const &pred) {
   int rc;
   auto tp = TClock::now();
   while (1) {

@@ -95,6 +95,7 @@ void SipXCall::onCallState(OnCallStateParam &prm) {
     /// `theCall` 是全局的 shared_ptr，不会自动释放！
     internalReleaseCall(this);
     if (this == theCall.get()) {
+      LOG(WARNING) << "DISCONNECTED";
       interrupted = true;
     }
   }

@@ -163,7 +163,6 @@ int main(int argc, char *argv[]) {
                << " " << err.status << ": " << err.reason << endl
                << err.info();
   }
-  LOG(INFO) << "Call started";
 
   LOG(INFO) << "Set signal handlers";
   for (int i = 0; i < (sizeof(hand_sigs) / sizeof(hand_sigs[0])); ++i) {
@@ -171,7 +170,10 @@ int main(int argc, char *argv[]) {
   }
 
   LOG(INFO) << "Start polling";
-  poller.runUntil(1000, 1000, []() { return !interrupted; });
+  time_t begin = time(NULL);
+  poller.runUntil(1000, 1000, [&begin]() {
+    return (!interrupted && (time(NULL) - begin < FLAGS_max_alive));
+  });
 
   LOG(WARNING) << "Hangup all calls";
   ep.hangupAllCalls();
