@@ -170,9 +170,6 @@ int main(int argc, char *argv[]) {
     PCHECK(SIG_ERR != signal(hand_sigs[i], sig_handler));
   }
 
-  /// IMPORTANT: “呼叫开始” 方认为启动成功！
-  eventPub->pub("onCreateCall");
-
   LOG(INFO) << "Start polling";
   poller.runUntil(1000, 1000, []() { return !interrupted; });
 

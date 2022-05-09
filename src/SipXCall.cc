@@ -120,15 +120,7 @@ void SipXCall::onCallMediaState(OnCallMediaStateParam &prm) {
 
   if (eventPub) {
     ostringstream oss;
-    oss << "onCallMediaState: "
-
-        << " " << ci.state
-
-        << " " << ci.stateText
-
-        << " " << ci.lastStatusCode
-
-        << " " << ci.lastReason;
+    oss << "onCallMediaState: ";
     eventPub->pub(oss.str());
   }
 
