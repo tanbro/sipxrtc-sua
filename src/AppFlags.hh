@@ -7,5 +7,6 @@
 #include <gflags/gflags.h>
 
 DECLARE_string(dst_uri);
+DECLARE_uint32(max_alive);
 
 #endif
