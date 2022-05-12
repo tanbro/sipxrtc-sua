@@ -66,11 +66,27 @@ void SipXCall::onCallState(OnCallStateParam &prm) {
   LOG(INFO) << "[" << ci.accId << "]"
             << " "
             << "(" << getId() << "/" << ci.callIdString << "): CallState ... "
-            << ci.state << " " << ci.stateText;
+
+            << " " << ci.state
+
+            << " " << ci.stateText
+
+            << " " << ci.lastStatusCode
+
+            << " " << ci.lastReason;
 
   if (eventPub) {
     ostringstream oss;
-    oss << "onCallState: " << ci.state << " " << ci.stateText;
+    oss << "onCallState:"
+
+        << " " << ci.state
+
+        << " " << ci.stateText
+
+        << " " << ci.lastStatusCode
+
+        << " " << ci.lastReason;
+
     eventPub->pub(oss.str());
   }
 
@@ -79,6 +95,7 @@ void SipXCall::onCallState(OnCallStateParam &prm) {
     /// `theCall` 是全局的 shared_ptr，不会自动释放！
     internalReleaseCall(this);
     if (this == theCall.get()) {
+      LOG(WARNING) << "DISCONNECTED";
       interrupted = true;
     }
   }
@@ -104,10 +121,11 @@ void SipXCall::onCallMediaState(OnCallMediaStateParam &prm) {
 
   if (eventPub) {
     ostringstream oss;
-    oss << "onCallMediaState: " << ci.state << " " << ci.stateText;
+    oss << "onCallMediaState: ";
     eventPub->pub(oss.str());
   }
 
+  // 猜测：在 Media 改变之后，需要重复创建方可成功桥接
   destroyPlayerAndRecorder();
 
   VLOG(1) << "create UdsReader";

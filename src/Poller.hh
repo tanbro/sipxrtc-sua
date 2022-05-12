@@ -4,6 +4,7 @@
 #include <sys/poll.h>
 
 #include <cstddef>
+#include <functional>
 
 #include <pjsua2.hpp>
 
@@ -12,12 +13,6 @@
 #endif
 
 namespace sipxsua {
-
-/**
- * @brief 返回 `true` 方可继续 poll, 否则退出
- *
- */
-using PollPred = bool (*)();
 
 /**
  * @brief
@@ -34,7 +29,7 @@ public:
   Poller(){};
   ~Poller(){};
 
-  void runUntil(int timeout, int interval, PollPred pred);
+  void runUntil(int timeout, int interval, std::function<bool()> const &pred);
 
 private:
   pollfd fds[SIPXSUA_MAX_POLL_FDS];
