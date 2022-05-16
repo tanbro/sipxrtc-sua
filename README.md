@@ -152,6 +152,147 @@ SIPX 的 [SIP][] 软电话。
 
       构建得到的可执行/库文件等输出在 `out` 目录。
 
+### Develop on CentOS 7
+
+1. 安装开发工具
+
+   ```bash
+   yum groupinstall "Development Tools"
+   ```
+
+1. 安装项目构建工具，我们版本高于系统所提供的 CMake
+
+   按照 CMake 官方给出的安装说明，安装 `CMake v3.23.1`:
+
+   ```bash
+   export CMAKE_VERSION=3.23.1
+   cmake_bin_dist="cmake-${CMAKE_VERSION}-$(echo $(uname -s) | tr '[:upper:]' '[:lower:]')-$(echo $(uname -m) | tr '[:upper:]' '[:lower:]').sh"
+   cmake_checksum_file="cmake-${CMAKE_VERSION}-SHA-256.txt"
+   wget ${cmake_checksum_file} https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/${cmake_checksum_file}
+   wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/${cmake_bin_dist}
+   checksum=$(cat ${cmake_checksum_file} | grep ${cmake_bin_dist})
+   echo "${checksum}" | sha256sum -c
+   sh ${cmake_bin_dist} --skip-license --prefix=/usr/local
+   ```
+
+   安装完毕后，检查其版本:
+
+   ```bash
+   $ cmake --version
+   cmake version 3.23.1
+
+   CMake suite maintained and supported by Kitware (kitware.com/cmake).
+   ```
+
+1. 如果尚未从远端获取 submodule 代码, 应进行一次初始化更新:
+
+   ```bash
+   git submodules foreach update --init
+   ```
+
+1. 构建和安装 `bcg729`
+
+   由于 [G.729][] 在 CTI 领域十分重要，我们认为这是一个**必选项**。
+
+   [PJSIP][] 可以使用 [bcg729](https://github.com/BelledonneCommunications/bcg729)，它已经被加入到了 submodules.
+
+   我们首先将这个 `submodule` 检出到最近的发行版（目前是 1.1.1）:
+
+   ```bash
+   cd submodules/bcg729
+   git checkout -b release-1.1.1 1.1.1
+   ```
+
+   然后按照其 [README](submodules/bcg729/README.md) 的说明进行构建和安装:
+
+   ```bash
+   cmake .
+   make
+   sudo make install
+   ```
+
+1. 构建和安装 [PJSIP][]
+
+   1. 安装 [PJSIP][] 的开发依赖包:
+
+      1. 可使用系统包管理器安装的:
+
+         ```bash
+         yum install openssl-devel libuuid-devel
+         ```
+
+         > 说明:
+         >
+         > - 如需使用 `srtp`, `SIP over TLS` 等网络安全特性(**强烈推荐**)，则安装 `libssl-dev`；否则不用。
+         >
+         > - 其它编码，如需使用 `opus` 音频编码，则安装 `libopus-dev`；否则不用。
+         >
+         >   `opus` 是默认支持多 Channel Audio 的，而我们的 Mix 与 Resample 还没有为 multiple channels 做好准备，所以不建议使用！
+
+      1. 需要通过源代码安装的:
+
+         - `bcg729`: 在之前的步骤中已经安装
+
+   1. 编译 [PJSIP][]
+
+      检出到最近的发布版(目前是 2.12)
+
+      ```bash
+      cd submodules/pjproject
+      git checkout -b release-2.12 2.12
+      ```
+
+      按照其 [README](submodules/pjproject/README.txt) 说明进行 `confgiure` 和 `make`。
+
+      > 注意:
+      >
+      > - 使用 `--disable-sound` 参数，让 [PJSIP][] 使用“空声音设备”。这是这个项目所**必须**的。
+      > - 由于只需要音频部分，可关闭许多视频相关部分的配置
+
+      完整的构建命令是:
+
+      ```bash
+      ./configure --disable-video --disable-libyuv --disable-sdl --disable-ffmpeg --disable-v4l2 --disable-openh264 --disable-vpx --disable-libwebrtc --disable-sound
+      make dep && make clean && make
+      ```
+
+      本项目默认使用 `submodules/pjproject` 子目录的的相对路径静态链接 [PJSIP][]，故不必安装到系统。
+
+1. 构建该项目(`sipxsua` 执行文件)
+
+   1. 安装其依赖开发包:
+
+      1. 可使用系统包管理器安装的:
+
+         ```bash
+         sudo apt install libsamplerate-devel
+         ```
+
+      1. 需要从源代码构建的:
+
+         1. google-gflags:
+
+            ```bash
+            wget https://github.com/gflags/gflags/archive/refs/tags/v2.2.2.tar.gz
+            tar -xf gflags-2.2.2.tar.gz
+            cd gflags-2.2.2
+            mkdir build && cd build
+            cmake -DBUILD_SHARED_LIBS=ON BUILD_gflags_LIBS=ON ..
+            make && make install
+            ```
+
+   1. 使用 CMake 构建
+
+      应单独建立一个名为 `build` 的目录，专用于构建:
+
+      ```bash
+      mkdir build
+      cmake -S build -B build
+      cmake --build build
+      ```
+
+      构建得到的可执行/库文件等输出在 `out` 目录。
+
 ## 发布到目标系统
 
 ### Deploy on Ubuntu 20.04 LTS (focal)
