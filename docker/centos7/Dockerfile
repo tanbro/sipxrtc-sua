@@ -89,12 +89,13 @@ RUN --mount=type=bind,target=/root/project,readonly \
 
 # 构建 PJSIP
 # 特殊: 要使用静态库，不要删除！
+ARG PJ_VERSION=2.12.1
 RUN --mount=type=bind,target=/root/project,readonly \
     --mount=type=cache,target=/root/.cache/download \
     set -e ;\
-    _url=https://github.com/pjsip/pjproject/archive/refs/tags/2.12.1.tar.gz ;\
-    _file=pjproject-2.12.1.tar.gz ;\
-    _dir=pjproject-2.12.1 ;\
+    _url=https://github.com/pjsip/pjproject/archive/refs/tags/${PJ_VERSION}.tar.gz ;\
+    _file=pjproject-${PJ_VERSION}.tar.gz ;\
+    _dir=pjproject-${PJ_VERSION} ;\
     ( \
     cd /root/.cache/download ;\
     [ ! -f  ${_file} ] \
@@ -103,6 +104,7 @@ RUN --mount=type=bind,target=/root/project,readonly \
     [ ! -f  ${_file} ] && wget -O ${_file} ${_url} ;\
     mkdir -p /root/deps ;\
     tar -xf ${_file} -C /root/deps ;\
+    echo "/root/deps/${_dir}" | tee /root/deps/PJDIR ;\
     ) ;\
     ( \
     cd /root/deps/${_dir} ;\
