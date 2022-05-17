@@ -1,0 +1,32 @@
+services:
+  centos7:
+    build: ./centos7
+    image: sipxsua_centos7_build
+    volumes:
+      - type: bind
+        source: ../
+        target: /root/project
+    working_dir: /root/project
+    command:
+      - bash
+      - -c
+      - |
+        set -e
+        export OUTDIR="/root/project/out/centos7-$$(uname -m)"
+        mkdir -p $${OUTDIR}
+        echo "OUTDIR: $${OUTDIR}"
+        export PJDIR=$$(cat /root/deps/PJDIR | xargs | awk '{ print $$1 }')
+        echo "PJDIR: $${PJDIR}"
+        (
+          TMP_DIR="$$(mktemp -d)"
+          trap 'rm -fr "$${TMP_DIR}"' EXIT
+          cd $${TMP_DIR}
+          cmake -DCMAKE_BUILD_TYPE=Release -DOUTDIR=$${OUTDIR} -DPJDIR=$${PJDIR} -DBCG729=cmake-static -DCMAKE_FIND_GFLAGS=ON -DCMAKE_FIND_GLOG=ON /root/project
+          cmake --build .
+        )
+        export OUTLIB=$${OUTDIR}/lib
+        mkdir -p $${OUTLIB}
+        (set +e; cd /usr/local/lib; cp -av libgflags.so* $${OUTLIB}; :)
+        (set +e; cd /usr/local/lib64; cp -av libgflags.so* $${OUTLIB}; :)
+        (set +e; cd /usr/local/lib; cp -av libglog.so* $${OUTLIB}; :)
+        (set +e; cd /usr/local/lib64; cp -av libglog.so* $${OUTLIB}; :)

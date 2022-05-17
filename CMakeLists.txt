@@ -32,20 +32,29 @@ option(
   ON
 )
 
-option(
-  WITH_BCG729
-  "Whether to use libbcg729. When static link pjproject, and the audio codec is enabled in it, the option must be \"ON\" here"
-  ON
-)
-option(
-  WITH_BCG729_STATIC
-  "Whether to use bcg729's static library in CMakeLists.txt directly, or try to find it by pkg-congif. Only avaiable when `WITH_BCG729` is \"ON\""
-  ON
-)
+set(BCG729 "subdir-static" CACHE STRING "How to use libbcg729")
+set_property(CACHE BCG729 PROPERTY STRINGS subdir-shared subdir-static pkgcfg cmake-shared cmakes-tatic)
+set(BCG729_DIR "submodules/bcg729" CACHE STRING "Directory of libbcg729. Only available when `GCG729` is `subdir-*`")
 
 option(
   WITH_OPUS
   "Whether to use libopus. When static link pjproject, and the audio codec is enabled in it, the option must be \"ON\" here!"
+  OFF
+)
+
+option(
+  CMAKE_FIND_GFLAGS
+  "Whether to find gflags with cmake. If not, try to find it with pkg-config"
+  OFF
+)
+set(
+  CMAKE_FIND_GFLAGS_TARGET "" CACHE STRING
+  "To request a particular imported gflags library target to link against. Only availvable when `CMAKE_FIND_GFLAGS` is ON."
+)
+
+option(
+  CMAKE_FIND_GLOG
+  "Whether to find glog with cmake. If not, try to find it with pkg-config"
   OFF
 )
 
@@ -114,7 +123,12 @@ if (GIT_REV_PARSE_OUTPUT)
 endif ()
 
 # output dir, name, rpath, ...
-set(OUTDIR ${CMAKE_CURRENT_LIST_DIR}/out/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_CXX_COMPILER_ID}/${CMAKE_BUILD_TYPE})
+if (OUTDIR)
+  message("OUTDIR was set explicitly: \"${OUTDIR}\"")
+else ()
+  set(OUTDIR ${CMAKE_CURRENT_LIST_DIR}/out/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_CXX_COMPILER_ID}/${CMAKE_BUILD_TYPE})
+  message("Use default OUTDIR: \"${OUTDIR}\"")
+endif ()
 set_target_properties(${PROJECT_NAME}
     PROPERTIES
     # -Wl,-rpath
@@ -223,18 +237,28 @@ if (${WITH_PJ_STATIC})
   endif ()
 
   # g729
-  if (${WITH_BCG729})
-    if (${WITH_BCG729_STATIC})
-      add_subdirectory(submodules/bcg729)
-      target_link_libraries(${PROJECT_NAME} bcg729-static)
-    else()
-      pkg_check_modules(LIBBCG729 REQUIRED libbcg729)
-      target_link_libraries(${PROJECT_NAME} ${LIBBCG729_LIBRARIES})
-      target_include_directories(${PROJECT_NAME} PRIVATE ${LIBBCG729_INCLUDE_DIRS})
-      target_compile_options(${PROJECT_NAME} PRIVATE ${LIBBCG729_CFLAGS})
-      target_link_directories(${PROJECT_NAME} PRIVATE ${LIBBCG729_LIBRARY_DIRS})
-      target_link_options(${PROJECT_NAME} PRIVATE ${LIBBCG729_LDFLAGS})
-    endif()
+  message(STATUS "BCG729='${BCG729}'")
+  if ("${BCG729}" STREQUAL "subdir-shared")
+    add_subdirectory(${BCG729_DIR})
+    target_link_libraries(${PROJECT_NAME} bcg729-static)
+  elseif ("${BCG729}" STREQUAL "subdir-static")
+    add_subdirectory(${BCG729_DIR})
+    target_link_libraries(${PROJECT_NAME} bcg729)
+  elseif ("${BCG729}" STREQUAL "pkgcfg")
+    pkg_check_modules(LIBBCG729 REQUIRED libbcg729)
+    target_link_libraries(${PROJECT_NAME} ${LIBBCG729_LIBRARIES})
+    target_include_directories(${PROJECT_NAME} PRIVATE ${LIBBCG729_INCLUDE_DIRS})
+    target_compile_options(${PROJECT_NAME} PRIVATE ${LIBBCG729_CFLAGS})
+    target_link_directories(${PROJECT_NAME} PRIVATE ${LIBBCG729_LIBRARY_DIRS})
+    target_link_options(${PROJECT_NAME} PRIVATE ${LIBBCG729_LDFLAGS})
+  elseif("${BCG729}" STREQUAL "cmake-shared")
+    find_package(Bcg729 REQUIRED components bcg729)
+    target_link_libraries(${PROJECT_NAME} bcg729)
+  elseif("${BCG729}" STREQUAL "cmake-static")
+    find_package(Bcg729 REQUIRED components bcg729-static)
+    target_link_libraries(${PROJECT_NAME} bcg729-static)
+  else()
+    message(FATAL_ERROR "invalide `BCG729`: ${BCG729}")
   endif()
 
   # opus
@@ -268,17 +292,31 @@ target_link_directories(${PROJECT_NAME} PRIVATE ${SAMPLERATE_LIBRARY_DIRS})
 target_link_options(${PROJECT_NAME} PRIVATE ${SAMPLERATE_LDFLAGS})
 
 # dependency of this project: gflags
-pkg_check_modules(GFLAGS REQUIRED gflags)
-target_link_libraries(${PROJECT_NAME} ${GFLAGS_LIBRARIES})
-target_include_directories(${PROJECT_NAME} PRIVATE ${GFLAGS_INCLUDE_DIRS})
-target_compile_options(${PROJECT_NAME} PRIVATE ${GFLAGS_CFLAGS})
-target_link_directories(${PROJECT_NAME} PRIVATE ${GFLAGS_LIBRARY_DIRS})
-target_link_options(${PROJECT_NAME} PRIVATE ${GFLAGS_LDFLAGS})
+if (${CMAKE_FIND_GFLAGS})
+  if ("${CMAKE_FIND_GFLAGS_TARGET}" STREQUAL "")
+    find_package(gflags REQUIRED)
+  else ()
+    find_package(gflags REQUIRED COMPONENTS "${CMAKE_FIND_GFLAGS_TARGET}")
+  endif()
+  target_link_libraries(${PROJECT_NAME} gflags)
+else ()
+  pkg_check_modules(GFLAGS REQUIRED gflags)
+  target_link_libraries(${PROJECT_NAME} ${GFLAGS_LIBRARIES})
+  target_include_directories(${PROJECT_NAME} PRIVATE ${GFLAGS_INCLUDE_DIRS})
+  target_compile_options(${PROJECT_NAME} PRIVATE ${GFLAGS_CFLAGS})
+  target_link_directories(${PROJECT_NAME} PRIVATE ${GFLAGS_LIBRARY_DIRS})
+  target_link_options(${PROJECT_NAME} PRIVATE ${GFLAGS_LDFLAGS})
+endif()
 
 # dependency of this project: glog
-pkg_check_modules(LIBGLOG REQUIRED libglog)
-target_link_libraries(${PROJECT_NAME} ${LIBGLOG_LIBRARIES})
-target_include_directories(${PROJECT_NAME} PRIVATE ${LIBGLOG_INCLUDE_DIRS})
-target_compile_options(${PROJECT_NAME} PRIVATE ${LIBGLOG_CFLAGS})
-target_link_directories(${PROJECT_NAME} PRIVATE ${LIBGLOG_LIBRARY_DIRS})
-target_link_options(${PROJECT_NAME} PRIVATE ${LIBGLOG_LDFLAGS})
+if (${CMAKE_FIND_GLOG})
+  find_package (glog REQUIRED)
+  target_link_libraries (${PROJECT_NAME} glog::glog)
+else ()
+  pkg_check_modules(LIBGLOG REQUIRED libglog)
+  target_link_libraries(${PROJECT_NAME} ${LIBGLOG_LIBRARIES})
+  target_include_directories(${PROJECT_NAME} PRIVATE ${LIBGLOG_INCLUDE_DIRS})
+  target_compile_options(${PROJECT_NAME} PRIVATE ${LIBGLOG_CFLAGS})
+  target_link_directories(${PROJECT_NAME} PRIVATE ${LIBGLOG_LIBRARY_DIRS})
+  target_link_options(${PROJECT_NAME} PRIVATE ${LIBGLOG_LDFLAGS})
+endif()
