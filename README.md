@@ -145,9 +145,9 @@ SIPX 的 [SIP][] 软电话。
       应单独建立一个名为 `build` 的目录，专用于构建:
 
       ```bash
-      mkdir build
-      cmake -S build -B build
-      cmake --build build
+      mkdir build && cd build
+      cmake ..
+      make build
       ```
 
       构建得到的可执行/库文件等输出在 `out` 目录。
@@ -221,14 +221,6 @@ SIPX 的 [SIP][] 软电话。
          yum install openssl-devel libuuid-devel
          ```
 
-         > 说明:
-         >
-         > - 如需使用 `srtp`, `SIP over TLS` 等网络安全特性(**强烈推荐**)，则安装 `libssl-dev`；否则不用。
-         >
-         > - 其它编码，如需使用 `opus` 音频编码，则安装 `libopus-dev`；否则不用。
-         >
-         >   `opus` 是默认支持多 Channel Audio 的，而我们的 Mix 与 Resample 还没有为 multiple channels 做好准备，所以不建议使用！
-
       1. 需要通过源代码安装的:
 
          - `bcg729`: 在之前的步骤中已经安装
@@ -277,7 +269,7 @@ SIPX 的 [SIP][] 软电话。
             tar -xf gflags-2.2.2.tar.gz
             cd gflags-2.2.2
             mkdir build && cd build
-            cmake -DBUILD_SHARED_LIBS=ON BUILD_gflags_LIBS=ON ..
+            cmake -DBUILD_SHARED_LIBS=ON ..
             make && make install
             ```
 
@@ -286,9 +278,9 @@ SIPX 的 [SIP][] 软电话。
       应单独建立一个名为 `build` 的目录，专用于构建:
 
       ```bash
-      mkdir build
-      cmake -S build -B build
-      cmake --build build
+      mkdir build && cd build
+      cmake ..
+      make
       ```
 
       构建得到的可执行/库文件等输出在 `out` 目录。
@@ -302,6 +294,21 @@ SIPX 的 [SIP][] 软电话。
 ```bash
 sudo apt install libssl1.1 libuuid1 libsamplerate0 libgoogle-glog0v5
 ```
+
+### Deploy on Centos 7 (focal)
+
+可使用系统包管理器进行安装的:
+
+```bash
+sudo apt install openssl-libs libuuid libsamplerate
+```
+
+需要从源代码构建的:
+
+- gflags
+- glog
+
+见上文
 
 其它？没写完。
 

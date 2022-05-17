@@ -58,10 +58,11 @@ RUN --mount=type=bind,target=/root/project \
     # 打印 cmake 版本
     cmake --version;
 
-ENV PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/local/share/pkgconfig
+# 貌似 CentOS 7 的 pc 不会搜索 /usr/local !
+ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/local/share/pkgconfig:${PKG_CONFIG_PATH}
 
 # 构建和安装 `bcg729`
-RUN --mount=type=bind,target=/root/project \
+RUN --mount=type=bind,target=/root/project,readonly \
     --mount=type=cache,target=/root/.cache/download \
     set -e ;\
     _url=https://github.com/BelledonneCommunications/bcg729/archive/refs/tags/1.1.1.tar.gz ;\
@@ -88,7 +89,7 @@ RUN --mount=type=bind,target=/root/project \
 
 # 构建 PJSIP
 # 特殊: 要使用静态库，不要删除！
-RUN --mount=type=bind,target=/root/project \
+RUN --mount=type=bind,target=/root/project,readonly \
     --mount=type=cache,target=/root/.cache/download \
     set -e ;\
     _url=https://github.com/pjsip/pjproject/archive/refs/tags/2.12.1.tar.gz ;\
@@ -110,7 +111,7 @@ RUN --mount=type=bind,target=/root/project \
     ) ;
 
 # GFlags
-RUN --mount=type=bind,target=/root/project \
+RUN --mount=type=bind,target=/root/project,readonly \
     --mount=type=cache,target=/root/.cache/download \
     set -e ;\
     _url=https://github.com/gflags/gflags/archive/refs/tags/v2.2.2.tar.gz ;\
@@ -128,14 +129,14 @@ RUN --mount=type=bind,target=/root/project \
     ( \
     cd /root/deps/${_dir} ;\
     mkdir build && cd build ;\
-    cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON .. ;\
+    cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=ON .. ;\
     make && make install ;\
     ) ;\
     rm -rf cd /root/deps/${_dir} ;\
     pkg-config --exists --print-errors gflags;
 
 # GLog
-RUN --mount=type=bind,target=/root/project \
+RUN --mount=type=bind,target=/root/project,readonly \
     --mount=type=cache,target=/root/.cache/download \
     set -e ;\
     _url=https://github.com/google/glog/archive/refs/tags/v0.6.0.tar.gz ;\
@@ -158,11 +159,3 @@ RUN --mount=type=bind,target=/root/project \
     ) ;\
     rm -rf cd /root/deps/${_dir} ;\
     pkg-config --exists --print-errors libglog;
-
-# 本项目
-RUN --mount=type=bind,target=/root/project \
-    set -e ;\
-    export PJDIR=/root/deps/pjproject-2.12.1 ;\
-    mkdir -p /root/build && cd /root/build ;\
-    cmake -DCMAKE_BUILD_TYPE=Release -DWITH_BCG729_CMAKE_STATIC=ON /root/project ;\
-    cmake --build ;

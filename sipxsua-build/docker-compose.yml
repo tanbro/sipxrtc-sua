@@ -1,0 +1,30 @@
+services:
+
+  centos7:
+    build: ./centos7
+    volumes:
+      - type: bind
+        source: ../
+        target: /root/project
+    working_dir: /root/project
+    command:
+      - /bin/bash
+      - -c
+      - |
+        set -e
+        export OUTDIR="/root/project/out/centos7-$$(uname -m)"
+        mkdir -p $${OUTDIR}
+        echo "OUTDIR: $${OUTDIR}"
+        (
+          TMP_DIR="$$(mktemp -d)"
+          trap 'rm -fr "$${TMP_DIR}"' EXIT
+          cd $${TMP_DIR}
+          cmake -DCMAKE_BUILD_TYPE=Release -DOUTDIR=$${OUTDIR} -DPJDIR=/root/deps/pjproject-2.12.1 -DBCG729=cmake-static -DCMAKE_FIND_GFLAGS=ON -DCMAKE_FIND_GLOG=ON /root/project
+          cmake --build .
+        )
+        export OUTLIB=$${OUTDIR}/lib
+        mkdir -p $${OUTLIB}
+        (set +e; cd /usr/local/lib; cp -av libgflags.so* $${OUTLIB}; :)
+        (set +e; cd /usr/local/lib64; cp -av libgflags.so* $${OUTLIB}; :)
+        (set +e; cd /usr/local/lib; cp -av libglog.so* $${OUTLIB}; :)
+        (set +e; cd /usr/local/lib64; cp -av libglog.so* $${OUTLIB}; :)
