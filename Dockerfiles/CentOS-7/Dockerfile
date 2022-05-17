@@ -7,8 +7,8 @@ RUN --mount=type=bind,target=/root/project \
     # yum cache
     --mount=type=cache,target=/var/cache/yum \
     set -e; \
-    if [ $(ls -l /root/project/download/CentOS-*.repo 2>/dev/null | wc -l) -gt 0 ]; then \
-    yes | cp -fv /root/project/download/CentOS-*.repo /etc/yum.repos.d/ ;\
+    if [ $(ls -l /root/project/download/CentOS-7/CentOS-*.repo 2>/dev/null | wc -l) -gt 0 ]; then \
+    yes | cp -fv /root/project/download/CentOS-7/CentOS-*.repo /etc/yum.repos.d/ ;\
     yum_opts="--disableplugin=fastestmirror" ;\
     fi ;\
     # 安装开发工具套件
@@ -58,6 +58,8 @@ RUN --mount=type=bind,target=/root/project \
     # 打印 cmake 版本
     cmake --version;
 
+ENV PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/local/share/pkgconfig
+
 # 构建和安装 `bcg729`
 RUN --mount=type=bind,target=/root/project \
     --mount=type=cache,target=/root/.cache/download \
@@ -76,13 +78,13 @@ RUN --mount=type=bind,target=/root/project \
     ) ;\
     ( \
     cd /root/deps/${_dir} ;\
-    cmake . ;\
+    cmake -DCMAKE_BUILD_TYPE=Release . ;\
     make ;\
     make install ;\
     ldconfig ;\
     ) ;\
     rm -rf /root/deps/${_dir} ;\
-    pkg-config --modversion libbcg729 ;
+    pkg-config --exists --print-errors libbcg729 ;
 
 # 构建 PJSIP
 # 特殊: 要使用静态库，不要删除！
@@ -126,11 +128,11 @@ RUN --mount=type=bind,target=/root/project \
     ( \
     cd /root/deps/${_dir} ;\
     mkdir build && cd build ;\
-    cmake -DBUILD_SHARED_LIBS=ON BUILD_gflags_LIBS=ON .. ;\
+    cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON .. ;\
     make && make install ;\
     ) ;\
     rm -rf cd /root/deps/${_dir} ;\
-    pkg-config --modversion gflags;
+    pkg-config --exists --print-errors gflags;
 
 # GLog
 RUN --mount=type=bind,target=/root/project \
@@ -150,17 +152,17 @@ RUN --mount=type=bind,target=/root/project \
     ) ;\
     ( \
     cd /root/deps/${_dir} ;\
-    cmake -S . -B build ;\
+    cmake -DCMAKE_BUILD_TYPE=Release -S . -B build ;\
     cmake --build build ;\
     cmake --build build --target install ;\
     ) ;\
     rm -rf cd /root/deps/${_dir} ;\
-    pkg-config --modversion libglog;
+    pkg-config --exists --print-errors libglog;
 
 # 本项目
 RUN --mount=type=bind,target=/root/project \
     set -e ;\
     export PJDIR=/root/deps/pjproject-2.12.1 ;\
     mkdir -p /root/build && cd /root/build ;\
-    cmake -DCMAKE_BUILD_TYPE=Release -DWITH_BCG729_STATIC=OFF /root/project ;\
+    cmake -DCMAKE_BUILD_TYPE=Release -DWITH_BCG729_CMAKE_STATIC=ON /root/project ;\
     cmake --build ;
