@@ -282,9 +282,6 @@ else ()
   target_link_options(${PROJECT_NAME} PRIVATE ${LIBPJPROJECT_LDFLAGS})
 endif()
 
-# Thread/PThread
-target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT})
-
 # dependency of this project: libsamplerate
 pkg_check_modules(SAMPLERATE REQUIRED samplerate)
 target_link_libraries(${PROJECT_NAME} ${SAMPLERATE_LIBRARIES})
