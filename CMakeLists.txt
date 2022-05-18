@@ -32,7 +32,7 @@ option(
   ON
 )
 
-set(BCG729 "subdir-static" CACHE STRING "How to use libbcg729")
+set(BCG729 "subdir-static" CACHE STRING "How to use libbcg729. . When static link pjproject, and the audio codec is enabled in it, the program must link Bcg729!")
 set_property(CACHE BCG729 PROPERTY STRINGS subdir-shared subdir-static pkgcfg cmake-shared cmakes-tatic)
 set(BCG729_DIR "submodules/bcg729" CACHE STRING "Directory of libbcg729. Only available when `GCG729` is `subdir-*`")
 
@@ -280,8 +280,10 @@ else ()
   target_compile_options(${PROJECT_NAME} PRIVATE ${LIBPJPROJECT_CFLAGS})
   target_link_directories(${PROJECT_NAME} PRIVATE ${LIBPJPROJECT_LIBRARY_DIRS})
   target_link_options(${PROJECT_NAME} PRIVATE ${LIBPJPROJECT_LDFLAGS})
-
 endif()
+
+# Thread/PThread
+target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT})
 
 # dependency of this project: libsamplerate
 pkg_check_modules(SAMPLERATE REQUIRED samplerate)
