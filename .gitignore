@@ -765,3 +765,7 @@ build/
 [Tt][Ee][Mm][Pp]/
 [Dd]ownload/
 [Dd]ownloads/
+
+# dotenv environment variables file
+.env
+.env.*
