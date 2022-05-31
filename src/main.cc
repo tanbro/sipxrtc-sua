@@ -146,6 +146,9 @@ int main(int argc, char *argv[]) {
     cfg.idUri = "sip:0.0.0.0";
     cfg.mediaConfig.transportConfig.port = FLAGS_rtp_port;
     cfg.mediaConfig.transportConfig.portRange = FLAGS_rtp_port_range;
+    if (!FLAGS_sip_public_address.empty()) {
+      cfg.mediaConfig.transportConfig.publicAddress = FLAGS_sip_public_address;
+    }
     cfg.mediaConfig.srtpUse = (pjmedia_srtp_use)FLAGS_srtp_use;
     account.create(cfg, true);
   }
