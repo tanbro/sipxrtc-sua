@@ -3,6 +3,7 @@
 
 #include <gflags/gflags.h>
 
+DECLARE_string(sip_public_address);
 DECLARE_uint32(sip_port);
 DECLARE_uint32(sip_port_range);
 

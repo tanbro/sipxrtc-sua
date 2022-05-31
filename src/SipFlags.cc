@@ -6,6 +6,7 @@
 
 static bool valide_srtp_use(const char *flagname, int32_t value);
 
+DEFINE_string(sip_public_address, "", "可指定地址或主机名");
 DEFINE_uint32(sip_port, 0,
               "用于 SIP 信令传输的 UDP 端口。`0` 表示任意可用端口。");
 DEFINE_uint32(sip_port_range, 0,

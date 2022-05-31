@@ -115,6 +115,9 @@ int main(int argc, char *argv[]) {
     if (cfg.port > 0) {
       cfg.portRange = FLAGS_sip_port_range;
     }
+    if (!FLAGS_sip_public_address.empty()) {
+      cfg.publicAddress = FLAGS_sip_public_address;
+    }
     VLOG(1) << ">>> pj::Endpoint::transportCreate("
             << "boundAddress=\"" << cfg.boundAddress << "\", "
             << "port=" << cfg.port << ",  "
