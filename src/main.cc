@@ -68,6 +68,7 @@ int main(int argc, char *argv[]) {
     if (FLAGS_sip_console_level >= 0) {
       cfg.logConfig.consoleLevel = FLAGS_sip_console_level;
     }
+    cfg.uaConfig.maxCalls = 1;
     VLOG(1) << ">>> pj::Endpoint::libInit()";
     ep.libInit(cfg);
     VLOG(1) << "<<< pj::Endpoint::libInit()";
