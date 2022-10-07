@@ -7,10 +7,10 @@
 
 #include "SipFlags.hh"
 
-static bool valide_path(const char *flagname, const std::string &value);
+static bool valid_path(const char *flagname, const std::string &value);
 
 DEFINE_string(aud_playback_path, "", "向该文件放音(Signed 16-bit PCM Mono)");
-DEFINE_validator(aud_playback_path, &valide_path);
+DEFINE_validator(aud_playback_path, &valid_path);
 DEFINE_uint32(aud_playback_samplerate, 48000, "放音的采样率");
 DEFINE_uint32(aud_playback_frametime, 20, "放音的frame时长(milli)");
 DEFINE_uint32(
