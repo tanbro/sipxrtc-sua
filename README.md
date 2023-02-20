@@ -35,9 +35,9 @@ SIPX 的 [SIP][] 软电话。
 1. 第二个思路 - 自定义设备
 
    参照 <https://trac.pjsip.org/repos/wiki/External_Sound_Device> 与 <https://trac.pjsip.org/repos/wiki/Audio_Dev_API#PortedDevices>
-  
+
    在构建时指定 `--enable-ext-sound`，然后模仿 `pjmedia/src/pjmedia-audiodev/alsa_dev.c`, `pjmedia/src/pjmedia-audiodev/null_dev.c` 等实现我们所需要的自定义设备，而后修改 `/pjmedia/src/pjmedia-audiodev/audiodev.c` ，让 [PJSIP][] 加载这个设备。
-  
+
 最终，我们采用了**第一种方法**。
 
 ## 搭建开发环境
@@ -234,7 +234,7 @@ SIPX 的 [SIP][] 软电话。
       git checkout -b release-2.12 2.12
       ```
 
-      按照其 [README](submodules/pjproject/README.txt) 说明进行 `confgiure` 和 `make`。
+      按照其 [README](submodules/pjproject/README.txt) 说明进行 `configure` 和 `make`。
 
       > 注意:
       >
@@ -295,7 +295,7 @@ SIPX 的 [SIP][] 软电话。
 sudo apt install libssl1.1 libuuid1 libsamplerate0 libgoogle-glog0v5
 ```
 
-### Deploy on Centos 7 (focal)
+### Deploy on Centos 7
 
 可使用系统包管理器进行安装的:
 
