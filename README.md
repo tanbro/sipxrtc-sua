@@ -114,7 +114,7 @@ SIPX 的 [SIP][] 软电话。
       git checkout -b release-2.12 2.12
       ```
 
-      按照其 [README](submodules/pjproject/README.txt) 说明进行 `confgiure` 和 `make`。
+      按照其 [README](submodules/pjproject/README.txt) 说明进行 `configure` 和 `make`。
 
       > 注意:
       >
