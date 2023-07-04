@@ -310,6 +310,21 @@ sudo apt install openssl-libs libuuid libsamplerate
 
 见上文
 
+## 使用 Docker 构建
+
+项目的 `build-script` 目录下有一系列基于 `docker-compose` 的构建脚本，可以直接构建出 `ubuntu:focal` 兼容的 binary 目标。
+
+```bash
+cd build-script
+docker compose up
+```
+
+> **Note:**
+>
+> 使用 `docker` 构建前仍需要同步 submodule 代码, 并检出到正确的版本。
+
+----
+
 其它？没写完。
 
 这个程序本身怎么发布？还没有想好，以后再说吧。

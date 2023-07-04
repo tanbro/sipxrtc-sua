@@ -4,7 +4,7 @@ set -e
 
 (
     cd /workspace/submodules/bcg729
-    cmake . && make make install
+    cmake . && make && make install
 )
 
 (

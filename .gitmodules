@@ -1,8 +1,8 @@
 [submodule "submodules/pjproject"]
 	path = submodules/pjproject
-	url = git@github.com:pjsip/pjproject.git
+	url = https://github.com/pjsip/pjproject.git
 	ignore = dirty
 [submodule "submodules/bcg729"]
 	path = submodules/bcg729
-	url = git@github.com:BelledonneCommunications/bcg729.git
+	url = https://github.com/BelledonneCommunications/bcg729.git
 	ignore = dirty
