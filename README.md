@@ -59,7 +59,7 @@ SIPX 的 [SIP][] 软电话。
 1. 如果尚未从远端获取 submodule 代码, 应进行一次初始化更新:
 
    ```bash
-   git submodules foreach update --init
+   git submodule update --init --recursive
    ```
 
 1. 构建和安装 `bcg729`
