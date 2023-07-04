@@ -1,0 +1,13 @@
+services:
+  build:
+    volumes:
+      - type: bind
+        source: ..
+        target: /workspace
+    working_dir: /workspace
+    env_file: .env
+    build:
+      context: .
+      args:
+        APT_SOURCES: ${APT_SOURCES}
+    command: [ /bin/bash, -eux, /workspace/build-scripts/build.sh ]

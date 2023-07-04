@@ -140,7 +140,7 @@ set_target_properties(${PROJECT_NAME}
 # libpjproject
 if (${WITH_PJ_STATIC})
   message("Static link pjproject!")
-  # libpjproject ， 使用本地 submodules/pjproject 中的静态库
+  # libpjproject: 使用本地 submodules/pjproject 中的静态库
   if (PJDIR)
     message("PJDIR was set explicitly: \"${PJDIR}\"")
   else ()
