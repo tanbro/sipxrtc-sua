@@ -68,7 +68,7 @@ SIPX 的 [SIP][] 软电话。
 
    [PJSIP][] 可以使用 [bcg729](https://github.com/BelledonneCommunications/bcg729)，它已经被加入到了 submodules.
 
-   我们首先将这个 `submodule` 检出到最近的发行版（目前是 1.1.1）:
+   我们首先将这个 `submodule` 检出到支持的最新发布版（目前是 1.1.1）:
 
    ```bash
    cd submodules/bcg729
@@ -107,7 +107,7 @@ SIPX 的 [SIP][] 软电话。
 
    1. 编译 [PJSIP][]
 
-      检出到最近的发布版(目前是 2.12)
+      检出到支持的最新发布版(目前是 2.12)
 
       ```bash
       cd submodules/pjproject
@@ -196,7 +196,7 @@ SIPX 的 [SIP][] 软电话。
 
    [PJSIP][] 可以使用 [bcg729](https://github.com/BelledonneCommunications/bcg729)，它已经被加入到了 submodules.
 
-   我们首先将这个 `submodule` 检出到最近的发行版（目前是 1.1.1）:
+   我们首先将这个 `submodule` 检出到支持的最新发布版（目前是 1.1.1）:
 
    ```bash
    cd submodules/bcg729
@@ -227,7 +227,7 @@ SIPX 的 [SIP][] 软电话。
 
    1. 编译 [PJSIP][]
 
-      检出到最近的发布版(目前是 2.12)
+      检出到支持的最新发布版(目前是 2.12)
 
       ```bash
       cd submodules/pjproject

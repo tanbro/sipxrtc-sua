@@ -4,7 +4,9 @@ set -e
 
 (
     cd submodules/bcg729
-    cmake . && make && make install
+    cmake .
+    make
+    make install
 )
 
 (

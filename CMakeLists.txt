@@ -32,8 +32,8 @@ option(
   ON
 )
 
-set(BCG729 "subdir-static" CACHE STRING "How to use libbcg729. . When static link pjproject, and the audio codec is enabled in it, the program must link Bcg729!")
-set_property(CACHE BCG729 PROPERTY STRINGS subdir-shared subdir-static pkgcfg cmake-shared cmakes-tatic)
+set(BCG729 "cmake-static" CACHE STRING "How to use libbcg729. . When static link pjproject, and the audio codec is enabled in it, the program must link Bcg729!")
+set_property(CACHE BCG729 PROPERTY STRINGS subdir-shared subdir-static pkgcfg cmake-shared cmake-static)
 set(BCG729_DIR "submodules/bcg729" CACHE STRING "Directory of libbcg729. Only available when `GCG729` is `subdir-*`")
 
 option(
@@ -240,10 +240,10 @@ if (${WITH_PJ_STATIC})
   message(STATUS "BCG729='${BCG729}'")
   if ("${BCG729}" STREQUAL "subdir-shared")
     add_subdirectory(${BCG729_DIR})
-    target_link_libraries(${PROJECT_NAME} bcg729-static)
+    target_link_libraries(${PROJECT_NAME} bcg729)
   elseif ("${BCG729}" STREQUAL "subdir-static")
     add_subdirectory(${BCG729_DIR})
-    target_link_libraries(${PROJECT_NAME} bcg729)
+    target_link_libraries(${PROJECT_NAME} bcg729-static)
   elseif ("${BCG729}" STREQUAL "pkgcfg")
     pkg_check_modules(LIBBCG729 REQUIRED libbcg729)
     target_link_libraries(${PROJECT_NAME} ${LIBBCG729_LIBRARIES})
