@@ -1,0 +1,13 @@
+services:
+  develop:
+    build:
+      context: .
+      args:
+        APT_SOURCES: ${APT_SOURCES}
+    env_file: .env
+    volumes:
+      - type: bind
+        source: ..
+        target: /workspace
+    working_dir: /workspace
+    command: sleep infinity

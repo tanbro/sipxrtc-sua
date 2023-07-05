@@ -1,13 +1,2 @@
-.*
-[Bb][Uu][Ii][Ll][Dd]/
-[Bb][Uu][Ii][Ll][Dd][Ss]/
-[Ll][Oo][Gg]/
-[Ll][Oo][Gg][Ss]/
-[Oo][Uu][Tt]/
-[Oo][Uu][Tt][Ss]/
-[Oo][Uu][Tt][Pp][Uu][Tt]/
-[Oo][Uu][Tt][Pp][Uu][Tt][Ss]/
-[Tt][Mm][Pp]/
-[Tt][Ee][Mm][Pp]/
-submodules/
-CMakeFiles/
+# Ignore everything
+*
