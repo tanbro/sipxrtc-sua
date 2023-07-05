@@ -10,4 +10,4 @@ services:
       context: .
       args:
         APT_SOURCES: ${APT_SOURCES}
-    command: [ /bin/bash, -eux, /workspace/build-script/build.sh ]
+    command: [ /bin/bash, -eux, build-script/build.sh ]
