@@ -4,7 +4,7 @@ services:
       context: ../dockerfiles/development
       args:
         APT_SOURCES: ${APT_SOURCES}
-    command: [ /bin/bash, -eux, scripts/build.sh ]
+    command: [ /bin/bash, -eux, scripts/build-all.sh ]
     volumes:
       - type: bind
         source: ..
