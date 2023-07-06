@@ -10,4 +10,4 @@ services:
         source: ..
         target: /workspace
     working_dir: /workspace
-    command: sleep infinity
+    entrypoint: [sleep, infinity]
