@@ -1,13 +1,13 @@
 services:
-  develop:
+  build:
     build:
       context: ../dockerfiles/development
       args:
         APT_SOURCES: ${APT_SOURCES}
-    env_file: .env
+    command: [ /bin/bash, -eux, scripts/build.sh ]
     volumes:
       - type: bind
         source: ..
         target: /workspace
     working_dir: /workspace
-    command: [sleep, infinity]
+    env_file: .env

@@ -14,10 +14,3 @@ set -e
     ./configure --disable-video --disable-libyuv --disable-sdl --disable-ffmpeg --disable-v4l2 --disable-openh264 --disable-vpx --disable-libwebrtc --disable-sound
     make dep && make
 )
-
-mkdir -p build
-(
-    cd build
-    cmake ..
-    cmake --build .
-)
