@@ -1,14 +1,29 @@
 # SIPXSUA
 
-SIPX 的 [SIP][] 软电话。
+## 概述
 
-这个程序用于 SIPX，它的功能是：
+[sipx][] 的 [SIP][] 软电话。
+
+这个程序用于 [sipx][]，它的功能是：
 
 - 启动后向指定的 SIP URI 发起音频呼叫。
 - 接通后，通过 IPC 将从对端收到的 PCM 音频流发送到指定的位置。
 - 接通后，通过 IPC 从指定位置读取 PCM 音频流，并发送给对端。
 
 它基于 [PJSIP][]
+
+## 关于开源
+
+> 该项目、代码不可用于商业目的；如需进行商业应用，请联系作者。该项目允许个人学习，修改和使用。基于该项目开发的项目、代码需要开放源代码，且在项目的根目录提供该文件并注明变更。不得利用该项目申请专利、著作权或任何其它资质、权利；不得将该项目用于商标或商业文件，也不得暗示使用。该项目的作者与拥有者不承担使用其后带来的义务，也不承诺提供后期维护。广州市和声信息技术有限公司拥有该项目的全部权利以及该协议的最终解释权。
+
+通过这个项目，学习者可以了解:
+
+1. 关于 [SIP][] 协议的一些常识
+1. 使用 CMake 对 C++ 项目进行构建和依赖管理
+1. 使用 Git Submodules 引入较大的第三方库的源码
+1. 一些 Linux 常见功能的用法，比如 Unix domain socket(aka UDS), Linux poll 等
+1. 一些常见的通用 C++ libraries 的用法，例如 gFlags, gLog
+1. 使用 Docker/Compose 进行跨平台构建
 
 ## 音频流控制的实现原理
 
@@ -332,3 +347,4 @@ docker compose up
 [SIP]: https://www.ietf.org/rfc/rfc3261.txt "SIP: Session Initiation Protocol"
 [PJSIP]: https://www.pjsip.org/ "PJSIP is a free and open source multimedia communication library written in C language implementing standard based protocols such as SIP, SDP, RTP, STUN, TURN, and ICE. It combines signaling protocol (SIP) with rich multimedia framework and NAT traversal functionality into high level API that is portable and suitable for almost any type of systems ranging from desktops, embedded systems, to mobile handsets."
 [G.729]: https://www.itu.int/rec/T-REC-G.729 "G.729 : Coding of speech at 8 kbit/s using conjugate-structure algebraic-code-excited linear prediction (CS-ACELP)"
+[sipx]: https://sipx.cn/ "实现互联网音视频和SIP话路的互联互通"
