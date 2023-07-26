@@ -59,7 +59,7 @@ SIPX 的 [SIP][] 软电话。
 1. 如果尚未从远端获取 submodule 代码, 应进行一次初始化更新:
 
    ```bash
-   git submodules foreach update --init
+   git submodule update --init --recursive
    ```
 
 1. 构建和安装 `bcg729`
@@ -68,7 +68,7 @@ SIPX 的 [SIP][] 软电话。
 
    [PJSIP][] 可以使用 [bcg729](https://github.com/BelledonneCommunications/bcg729)，它已经被加入到了 submodules.
 
-   我们首先将这个 `submodule` 检出到最近的发行版（目前是 1.1.1）:
+   我们首先将这个 `submodule` 检出到支持的最新发布版（目前是 1.1.1）:
 
    ```bash
    cd submodules/bcg729
@@ -107,14 +107,14 @@ SIPX 的 [SIP][] 软电话。
 
    1. 编译 [PJSIP][]
 
-      检出到最近的发布版(目前是 2.12)
+      检出到支持的最新发布版(目前是 2.12)
 
       ```bash
       cd submodules/pjproject
       git checkout -b release-2.12 2.12
       ```
 
-      按照其 [README](submodules/pjproject/README.txt) 说明进行 `confgiure` 和 `make`。
+      按照其 [README](submodules/pjproject/README.txt) 说明进行 `configure` 和 `make`。
 
       > 注意:
       >
@@ -187,7 +187,7 @@ SIPX 的 [SIP][] 软电话。
 1. 如果尚未从远端获取 submodule 代码, 应进行一次初始化更新:
 
    ```bash
-   git submodules foreach update --init
+   git submodule update --init --recursive
    ```
 
 1. 构建和安装 `bcg729`
@@ -196,7 +196,7 @@ SIPX 的 [SIP][] 软电话。
 
    [PJSIP][] 可以使用 [bcg729](https://github.com/BelledonneCommunications/bcg729)，它已经被加入到了 submodules.
 
-   我们首先将这个 `submodule` 检出到最近的发行版（目前是 1.1.1）:
+   我们首先将这个 `submodule` 检出到支持的最新发布版（目前是 1.1.1）:
 
    ```bash
    cd submodules/bcg729
@@ -227,7 +227,7 @@ SIPX 的 [SIP][] 软电话。
 
    1. 编译 [PJSIP][]
 
-      检出到最近的发布版(目前是 2.12)
+      检出到支持的最新发布版(目前是 2.12)
 
       ```bash
       cd submodules/pjproject
@@ -309,6 +309,21 @@ sudo apt install openssl-libs libuuid libsamplerate
 - glog
 
 见上文
+
+## 使用 Docker 构建
+
+项目的 `build-script` 目录下有一系列基于 `docker-compose` 的构建脚本，可以直接构建出 `ubuntu:focal` 兼容的 binary 目标。
+
+```bash
+cd build-script
+docker compose up
+```
+
+> **Note:**
+>
+> 使用 `docker` 构建前仍需要同步 submodule 代码, 并检出到正确的版本。
+
+----
 
 其它？没写完。
 

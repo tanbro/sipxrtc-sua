@@ -1,0 +1,13 @@
+services:
+  build:
+    build:
+      context: ../dockerfiles/development
+      args:
+        APT_SOURCES: ${APT_SOURCES}
+    command: [ /bin/bash, -eux, scripts/build-all.sh ]
+    volumes:
+      - type: bind
+        source: ..
+        target: /workspace
+    working_dir: /workspace
+    env_file: .env
