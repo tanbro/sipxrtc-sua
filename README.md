@@ -134,6 +134,15 @@
       按照其 [README](submodules/pjproject/README.txt) 说明进行 `configure` 和 `make`。
 
       > **Note**<br>
+      > According to <https://docs.pjsip.org/en/latest/pjsua2/building.html>:
+      >
+      > >On Linux/MacOS X/Unix, you need to build PJPROJECT with -fPIC option. You can either put it in user.mak file in root pjproject directory like this:
+      > >
+      > > ```makefile
+      > > export CFLAGS += -fPIC
+      > > ```
+
+      > **Note**<br>
       > 需要手动建立自定义配置文件: `pjlib/include/pj/config_site.h`。该文件可以为空
 
       > **Note**<br>
@@ -255,6 +264,15 @@
       ```
 
       按照其 [README](submodules/pjproject/README.txt) 说明进行 `configure` 和 `make`。
+
+      > **Note**<br>
+      > According to <https://docs.pjsip.org/en/latest/pjsua2/building.html>:
+      >
+      > >On Linux/MacOS X/Unix, you need to build PJPROJECT with -fPIC option. You can either put it in user.mak file in root pjproject directory like this:
+      > >
+      > > ```makefile
+      > > export CFLAGS += -fPIC
+      > > ```
 
       > **Note**<br>
       > 需要手动建立自定义配置文件: `pjlib/include/pj/config_site.h`。该文件可以为空
