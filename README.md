@@ -133,8 +133,10 @@
 
       按照其 [README](submodules/pjproject/README.txt) 说明进行 `configure` 和 `make`。
 
-      > 注意:
-      >
+      > **Note**<br>
+      > 需要手动建立自定义配置文件: `pjlib/include/pj/config_site.h`。该文件可以为空
+
+      > **Note**<br>
       > - 使用 `--disable-sound` 参数，让 [PJSIP][] 使用“空声音设备”。这是这个项目所**必须**的。
       > - 由于只需要音频部分，可关闭许多视频相关部分的配置
 
@@ -146,6 +148,7 @@
       ```
 
       本项目默认使用 `submodules/pjproject` 子目录的的相对路径静态链接 [PJSIP][]，故不必安装到系统。
+
 
 1. 构建该项目(`sipxsua` 执行文件)
 
@@ -253,8 +256,10 @@
 
       按照其 [README](submodules/pjproject/README.txt) 说明进行 `configure` 和 `make`。
 
-      > 注意:
-      >
+      > **Note**<br>
+      > 需要手动建立自定义配置文件: `pjlib/include/pj/config_site.h`。该文件可以为空
+
+      > **Note**<br>
       > - 使用 `--disable-sound` 参数，让 [PJSIP][] 使用“空声音设备”。这是这个项目所**必须**的。
       > - 由于只需要音频部分，可关闭许多视频相关部分的配置
 

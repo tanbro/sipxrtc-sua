@@ -1,5 +1,5 @@
 services:
-  develop:
+  development:
     build:
       context: ../dockerfiles/development
       args:

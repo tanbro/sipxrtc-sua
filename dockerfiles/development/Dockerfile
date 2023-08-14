@@ -1,5 +1,5 @@
-# ubuntu 2004 LTS (focal)
-FROM ubuntu:focal
+# vscode devcontainer of ubuntu 2004 LTS (focal)
+FROM mcr.microsoft.com/vscode/devcontainers/cpp:focal
 
 ARG APT_SOURCES
 
@@ -8,4 +8,4 @@ RUN --mount=type=cache,target=/var/cache/apt \
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get -o Acquire::https::Verify-Peer=false --allow-unauthenticated update && \
     apt-get --allow-unauthenticated install -y \
-        git build-essential cmake libssl-dev uuid-dev libsamplerate0-dev libgoogle-glog-dev
+        uuid-dev libsamplerate0-dev libgoogle-glog-dev

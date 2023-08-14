@@ -6,7 +6,7 @@
     //     "dockerfile": "Dockerfile"
     // },
     "dockerComposeFile": "docker-compose.yml",
-    "service": "develop",
+    "service": "development",
     "workspaceFolder": "/workspace",
     "overrideCommand": true,
     // Features to add to the dev container. More info: https://containers.dev/features.
