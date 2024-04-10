@@ -89,7 +89,7 @@
 
    ```bash
    cd submodules/bcg729
-   git checkout -b release-1.1.1 1.1.1
+   git fetch && git checkout -b release-1.1.1 1.1.1
    ```
 
    然后按照其 [README](submodules/bcg729/README.md) 的说明进行构建和安装:
@@ -124,28 +124,36 @@
 
    1. 编译 [PJSIP][]
 
-      检出到支持的最新发布版(目前是 2.12)
+      检出到支持的最新发布版(目前是 2.14.1)
 
       ```bash
       cd submodules/pjproject
-      git checkout -b release-2.12 2.12
+      git fetch && git checkout -b release-2.14.1 2.14.1
       ```
 
       按照其 [README](submodules/pjproject/README.txt) 说明进行 `configure` 和 `make`。
 
-      > **Note**<br>
+      > **Note** \
       > According to <https://docs.pjsip.org/en/latest/pjsua2/building.html>:
       >
-      > >On Linux/MacOS X/Unix, you need to build PJPROJECT with -fPIC option. You can either put it in user.mak file in root pjproject directory like this:
+      > > On Linux/MacOS X/Unix, you need to build PJPROJECT with -fPIC option. You can either put it in user.mak file in root pjproject directory like this:
       > >
       > > ```makefile
       > > export CFLAGS += -fPIC
       > > ```
+      >
+      > > ```bash
+      > > echo "export CFLAGS += -fPIC" | tee submodules/pjproject/user.mak
+      > > ```
 
-      > **Note**<br>
+      ----
+
+      > **Note** \
       > 需要手动建立自定义配置文件: `pjlib/include/pj/config_site.h`。该文件可以为空
 
-      > **Note**<br>
+      ----
+
+      > **Note** <br>
       > - 使用 `--disable-sound` 参数，让 [PJSIP][] 使用“空声音设备”。这是这个项目所**必须**的。
       > - 由于只需要音频部分，可关闭许多视频相关部分的配置
 
@@ -229,7 +237,7 @@
 
    ```bash
    cd submodules/bcg729
-   git checkout -b release-1.1.1 1.1.1
+   git fetch && git checkout -b release-1.1.1 1.1.1
    ```
 
    然后按照其 [README](submodules/bcg729/README.md) 的说明进行构建和安装:
@@ -256,28 +264,36 @@
 
    1. 编译 [PJSIP][]
 
-      检出到支持的最新发布版(目前是 2.12)
+      检出到支持的最新发布版(目前是 2.14.1)
 
       ```bash
       cd submodules/pjproject
-      git checkout -b release-2.12 2.12
+      git fetch && git checkout -b release-2.14.1 2.14.1
       ```
 
       按照其 [README](submodules/pjproject/README.txt) 说明进行 `configure` 和 `make`。
 
-      > **Note**<br>
+      > **Note** \
       > According to <https://docs.pjsip.org/en/latest/pjsua2/building.html>:
       >
-      > >On Linux/MacOS X/Unix, you need to build PJPROJECT with -fPIC option. You can either put it in user.mak file in root pjproject directory like this:
+      > > On Linux/MacOS X/Unix, you need to build PJPROJECT with -fPIC option. You can either put it in user.mak file in root pjproject directory like this:
       > >
       > > ```makefile
       > > export CFLAGS += -fPIC
       > > ```
+      >
+      > > ```bash
+      > > echo "export CFLAGS += -fPIC" | tee submodules/pjproject/user.mak
+      > > ```
 
-      > **Note**<br>
+      ----
+
+      > **Note** \
       > 需要手动建立自定义配置文件: `pjlib/include/pj/config_site.h`。该文件可以为空
 
-      > **Note**<br>
+      ----
+
+      > **Note** <br>
       > - 使用 `--disable-sound` 参数，让 [PJSIP][] 使用“空声音设备”。这是这个项目所**必须**的。
       > - 由于只需要音频部分，可关闭许多视频相关部分的配置
 
