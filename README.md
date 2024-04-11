@@ -59,7 +59,7 @@
 
 ## 搭建开发环境
 
-### Develop on Ubuntu 20.04 LTS (focal)
+### Develop on Debian/Ubuntu
 
 1. 安装开发工具
 
@@ -343,7 +343,7 @@
 
 ## 发布到目标系统
 
-### Deploy on Ubuntu 20.04 LTS (focal)
+### Deploy on Debian/Ubuntu
 
 可使用系统包管理器进行安装的:
 
