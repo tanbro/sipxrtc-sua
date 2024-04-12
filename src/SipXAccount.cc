@@ -9,7 +9,6 @@ using namespace std;
 namespace sipxsua {
 
 SipXAccount::~SipXAccount() {
-  VLOG(1) << "~[" << getId() << "] dtor";
   shutdown();
 }
 

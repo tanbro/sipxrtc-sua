@@ -15,9 +15,11 @@
 
 #include "AppFlags.hh"
 #include "IpcFlags.hh"
+#include "Poller.hh"
 #include "SipFlags.hh"
 #include "SipXAccount.hh"
 #include "SipXCall.hh"
+#include "SuaLogWriter.hh"
 #include "global.hh"
 #include "version.hh"
 
@@ -50,9 +52,12 @@ int main(int argc, char *argv[]) {
                << "version " << getVersionString() << endl
                << "^^^^^^^^^^^^^^^^ startup ^^^^^^^^^^^^^^^^" << endl;
 
+  SuaLogWriter suaLogWriter;
+
   LOG(INFO) << "Create SIP library";
+  ep = new pj::Endpoint();
   VLOG(1) << ">>> pj::Endpoint::libCreate()";
-  ep.libCreate();
+  ep->libCreate();
   VLOG(1) << "<<< pj::Endpoint::libCreate()";
 
   // Initialize endpoint
@@ -70,12 +75,12 @@ int main(int argc, char *argv[]) {
     }
     cfg.uaConfig.maxCalls = 1;
     VLOG(1) << ">>> pj::Endpoint::libInit()";
-    ep.libInit(cfg);
+    ep->libInit(cfg);
     VLOG(1) << "<<< pj::Endpoint::libInit()";
   }
 
   if (FLAGS_list_codecs) {
-    auto codecs = ep.codecEnum2();
+    auto codecs = ep->codecEnum2();
     sort(codecs.begin(), codecs.end(), [](pj::CodecInfo a, pj::CodecInfo b) {
       return a.priority > b.priority;
     });
@@ -126,10 +131,10 @@ int main(int argc, char *argv[]) {
             << "publicAddress=\"" << cfg.publicAddress << "\""
             << ")";
     pj::TransportId tid;
-    CHECK_LE(0, (tid = ep.transportCreate(PJSIP_TRANSPORT_UDP, cfg)))
+    CHECK_LE(0, (tid = ep->transportCreate(PJSIP_TRANSPORT_UDP, cfg)))
         << "<<< pj::Endpoint::transportCreate() failed";
     {
-      auto ti = ep.transportGetInfo(tid);
+      auto ti = ep->transportGetInfo(tid);
       VLOG(1) << "<<< pj::Endpoint::transportCreate() succeed: " << ti.info;
     }
   }
@@ -137,10 +142,12 @@ int main(int argc, char *argv[]) {
   // Start the library (worker threads etc)
   LOG(INFO) << "Start SIP library";
   VLOG(1) << ">>> pj::Endpoint::libStart()";
-  ep.libStart();
+  ep->libStart();
   VLOG(1) << "<<< pj::Endpoint::libStart()";
 
   LOG(INFO) << "Create default local SIP account";
+  // 有且仅有一个 local 账户
+  SipXAccount account;
   {
     // 本地账户
     pj::AccountConfig cfg;
@@ -156,7 +163,7 @@ int main(int argc, char *argv[]) {
 
   // 使用空设备
   LOG(INFO) << "Create audio device";
-  pj::AudDevManager &aud_dev_mgr = ep.audDevManager();
+  pj::AudDevManager &aud_dev_mgr = ep->audDevManager();
   aud_dev_mgr.setNullDev();
   CHECK_EQ(0, aud_dev_mgr.getDevCount());
 
@@ -177,19 +184,21 @@ int main(int argc, char *argv[]) {
   }
 
   LOG(INFO) << "Start polling";
+  Poller poller;
   time_t begin = time(NULL);
   poller.runUntil(1000, 1000, [&begin]() {
     return (!interrupted && (time(NULL) - begin < FLAGS_max_alive));
   });
 
   LOG(WARNING) << "Hangup all calls";
-  ep.hangupAllCalls();
+  ep->hangupAllCalls();
   // theCall 要显式的删除！防止 Call 在 PJ Lib 之后释放，引起的崩溃
   if (theCall) {
     theCall = nullptr;
   }
   LOG(WARNING) << "Destroy SIP library";
-  ep.libDestroy();
+  ep->libDestroy();
+  delete ep;
 
   if (eventPub) {
     LOG(INFO) << "delete event fifo publisher";

@@ -6,29 +6,19 @@
 #include <pjsua2.hpp>
 
 #include "EventPub.hh"
-#include "Poller.hh"
-#include "SipXAccount.hh"
 #include "SipXCall.hh"
-#include "SuaLogWriter.hh"
 
 namespace sipxsua {
 
 extern bool interrupted;
 
 // 有且仅有一个 SIP stack
-extern pj::Endpoint ep;
-
-// 有且仅有一个 local 账户
-extern SipXAccount account;
+extern pj::Endpoint* ep;
 
 // 有且仅有一个 local 账户下的呼出 Call
 extern std::shared_ptr<SipXCall> theCall;
 
-extern Poller poller;
-
 extern EventPub *eventPub;
-
-extern SuaLogWriter suaLogWriter;
 
 } // namespace sipxsua
 

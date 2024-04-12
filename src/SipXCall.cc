@@ -102,7 +102,7 @@ void SipXCall::onCallState(OnCallStateParam &prm) {
 }
 
 void SipXCall::onCallMediaState(OnCallMediaStateParam &prm) {
-  AudDevManager &mgr = ep.audDevManager();
+  AudDevManager &mgr = ep->audDevManager();
   auto ci = getInfo();
 
   auto peerMedia = getAudioMedia(-1); // 收到的来自远端的声音媒体
