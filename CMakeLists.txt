@@ -75,9 +75,22 @@ execute_process (
 # 项目：这个执行文件
 project(sipxsua)
 
-string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME_LOWERCASE)
-string(TOLOWER ${CMAKE_SYSTEM_PROCESSOR} SYSTEM_PROCESSOR_LOWERCASE)
-string(TOLOWER ${CMAKE_CXX_COMPILER_ID} CXX_COMPILER_ID_LOWERCASE)
+# output dir, name, rpath, ...
+if (OUTDIR)
+  message("OUTDIR was set explicitly: \"${OUTDIR}\"")
+else ()
+  if (${CMAKE_SYSTEM_NAME} STREQUAL Linux)
+    execute_process (
+      COMMAND bash -c "source /etc/os-release && echo $ID-$VERSION_ID"
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      OUTPUT_VARIABLE DISTRO_VERSION
+    )
+    set(OUTDIR ${CMAKE_CURRENT_LIST_DIR}/out/${DISTRO_VERSION}/${CMAKE_SYSTEM_PROCESSOR}/${CMAKE_CXX_COMPILER_ID}-${CMAKE_CXX_COMPILER_VERSION}/${CMAKE_BUILD_TYPE})
+  else ()
+    message(FATAL_ERROR "${CMAKE_SYSTEM_NAME} is NOT supported yet.")
+  endif ()
+  message("OUTDIR: \"${OUTDIR}\"")
+endif ()
 
 # source 目录
 set(SRC_DIR ${CMAKE_CURRENT_LIST_DIR}/src)
@@ -122,24 +135,6 @@ if (GIT_REV_PARSE_OUTPUT)
   )
 endif ()
 
-# output dir, name, rpath, ...
-if (OUTDIR)
-  message("OUTDIR was set explicitly: \"${OUTDIR}\"")
-else ()
-  if (${CMAKE_SYSTEM_NAME} STREQUAL Linux)
-    # get linux distro name by /etc/os-release
-    execute_process (
-      COMMAND source /etc/os-release
-      COMMAND echo "$ID-$VERSION_ID"
-      OUTPUT_VARIABLE DISTRO
-      OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    set(OUTDIR ${CMAKE_CURRENT_LIST_DIR}/out/${DISTRO}/${CMAKE_SYSTEM_PROCESSOR}/${CMAKE_CXX_COMPILER_ID}-${CMAKE_CXX_COMPILER_VERSION}/${CMAKE_BUILD_TYPE})
-  else ()
-    message(FATAL_ERROR "${CMAKE_SYSTEM_NAME} is NOT supported yet.")
-  endif ()
-  message("OUTDIR: \"${OUTDIR}\"")
-endif ()
 set_target_properties(${PROJECT_NAME}
     PROPERTIES
     # -Wl,-rpath
@@ -165,6 +160,9 @@ if (${WITH_PJ_STATIC})
   endif()
 
   # 参照其 configure 的 build.mak 文件
+  string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME_LOWERCASE)
+  string(TOLOWER ${CMAKE_SYSTEM_PROCESSOR} SYSTEM_PROCESSOR_LOWERCASE)
+  string(TOLOWER ${CMAKE_CXX_COMPILER_ID} CXX_COMPILER_ID_LOWERCASE)
   # as: export TARGET_NAME := x86_64-unknown-linux-gnu
   set(PJ_TARGET_NAME ${SYSTEM_PROCESSOR_LOWERCASE}-unknown-${SYSTEM_NAME_LOWERCASE}-${CXX_COMPILER_ID_LOWERCASE})
   set(PJ_LIB_SUFFIX ${PJ_TARGET_NAME}.a)
