@@ -24,8 +24,8 @@ public:
   static std::shared_ptr<SipXCall> createCall(pj::Account &acc,
                                               int callId = PJSUA_INVALID_ID);
 
-  virtual void onCallState(pj::OnCallStateParam &);
-  virtual void onCallMediaState(pj::OnCallMediaStateParam &);
+  virtual void onCallState(pj::OnCallStateParam &) override;
+  virtual void onCallMediaState(pj::OnCallMediaStateParam &) override;
 
   AudioMediaUdsReader *getReader();
   AudioMediaUdsWriter *getWriter();
