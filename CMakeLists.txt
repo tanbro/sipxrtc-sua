@@ -23,7 +23,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(
   WITH_PJ_STATIC
   "Link to libpjproject's shared/dynamic objects, which requires a configure with `--enable-shared`  and `sudo make install`"
-  ON
+  OFF
 )
 
 option(
@@ -126,8 +126,19 @@ endif ()
 if (OUTDIR)
   message("OUTDIR was set explicitly: \"${OUTDIR}\"")
 else ()
-  set(OUTDIR ${CMAKE_CURRENT_LIST_DIR}/out/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}-${CMAKE_CXX_COMPILER_ID}/${CMAKE_BUILD_TYPE})
-  message("Use default OUTDIR: \"${OUTDIR}\"")
+  if (${CMAKE_SYSTEM_NAME} STREQUAL Linux)
+    # get linux distro name by /etc/os-release
+    execute_process (
+      COMMAND source /etc/os-release
+      COMMAND echo "$ID-$VERSION_ID"
+      OUTPUT_VARIABLE DISTRO
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    set(OUTDIR ${CMAKE_CURRENT_LIST_DIR}/out/${DISTRO}/${CMAKE_SYSTEM_PROCESSOR}/${CMAKE_CXX_COMPILER_ID}-${CMAKE_CXX_COMPILER_VERSION}/${CMAKE_BUILD_TYPE})
+  else ()
+    message(FATAL_ERROR "${CMAKE_SYSTEM_NAME} is NOT supported yet.")
+  endif ()
+  message("OUTDIR: \"${OUTDIR}\"")
 endif ()
 set_target_properties(${PROJECT_NAME}
     PROPERTIES

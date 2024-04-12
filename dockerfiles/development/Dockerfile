@@ -12,6 +12,5 @@ ARG APT_SOURCES
 RUN --mount=type=cache,target=/var/cache/apt \
     if [ -n "${APT_SOURCES}" ]; then printenv APT_SOURCES | tee /etc/apt/sources.list; fi && \
     export DEBIAN_FRONTEND=noninteractive && \
-    apt -o Acquire::https::Verify-Peer=false --allow-unauthenticated update && \
-    apt --allow-unauthenticated install -y apt-transport-https ca-certificates && \
-    apt --allow-unauthenticated install -y uuid-dev libsamplerate0-dev libgoogle-glog-dev
+    apt update && \
+    apt install -y libssl-dev uuid-dev libsamplerate0-dev libgoogle-glog-dev
