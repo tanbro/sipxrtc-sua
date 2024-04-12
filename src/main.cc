@@ -52,8 +52,6 @@ int main(int argc, char *argv[]) {
                << "version " << getVersionString() << endl
                << "^^^^^^^^^^^^^^^^ startup ^^^^^^^^^^^^^^^^" << endl;
 
-  SuaLogWriter suaLogWriter;
-
   LOG(INFO) << "Create SIP library";
   ep = new pj::Endpoint();
   VLOG(1) << ">>> pj::Endpoint::libCreate()";
@@ -61,6 +59,7 @@ int main(int argc, char *argv[]) {
   VLOG(1) << "<<< pj::Endpoint::libCreate()";
 
   // Initialize endpoint
+
   LOG(INFO) << "Initialize SIP endpoint";
   {
     pj::EpConfig cfg;
@@ -73,6 +72,8 @@ int main(int argc, char *argv[]) {
     if (FLAGS_sip_console_level >= 0) {
       cfg.logConfig.consoleLevel = FLAGS_sip_console_level;
     }
+    cfg.logConfig.writer = new SuaLogWriter();
+    //
     cfg.uaConfig.maxCalls = 1;
     VLOG(1) << ">>> pj::Endpoint::libInit()";
     ep->libInit(cfg);
@@ -196,7 +197,6 @@ int main(int argc, char *argv[]) {
   if (theCall) {
     theCall = nullptr;
   }
-  LOG(WARNING) << "Destroy SIP library";
   ep->libDestroy();
   delete ep;
 
