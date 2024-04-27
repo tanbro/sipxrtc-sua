@@ -4,7 +4,9 @@ services:
       context: ../dockerfiles/development
       args:
         APT_SOURCES: ${APT_SOURCES}
-    env_file: ../dockerfiles/development/.env
+    env_file:
+      - path: ../dockerfiles/development/.env
+        required: false
     volumes:
       - type: bind
         source: ..
