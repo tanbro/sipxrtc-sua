@@ -21,24 +21,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(
-  WITH_PJ_STATIC
-  "Link to libpjproject's shared/dynamic objects, which requires a configure with `--enable-shared`  and `sudo make install`"
-  OFF
-)
-
-option(
-  WITH_OPENSSL
-  "Whether to use openssl library. When static link pjproject, and openssl is enabled in it, the option must be \"ON\" here"
-  ON
-)
-
-set(BCG729 "cmake-static" CACHE STRING "How to use libbcg729. . When static link pjproject, and the audio codec is enabled in it, the program must link Bcg729!")
-set_property(CACHE BCG729 PROPERTY STRINGS subdir-shared subdir-static pkgcfg cmake-shared cmake-static)
-set(BCG729_DIR "submodules/bcg729" CACHE STRING "Directory of libbcg729. Only available when `GCG729` is `subdir-*`")
-
-option(
-  WITH_OPUS
-  "Whether to use libopus. When static link pjproject, and the audio codec is enabled in it, the option must be \"ON\" here!"
+  PJPROJECT_SHARED
+  "When link to pjproject shared, it should configure with `--enable-shared`"
   OFF
 )
 
@@ -53,10 +37,23 @@ set(
 )
 
 option(
+  GFLAGS_SHARED
+  "link gflags static with `pkg-config --libs --statc`"
+  ON
+)
+
+option(
   CMAKE_FIND_GLOG
   "Whether to find glog with cmake. If not, try to find it with pkg-config"
   OFF
 )
+
+option(
+  GLOG_SHARED
+  "link glog static with `pkg-config --libs --statc`"
+  ON
+)
+
 
 execute_process (
   COMMAND git describe
@@ -144,152 +141,16 @@ set_target_properties(${PROJECT_NAME}
 )
 
 # libpjproject
-if (${WITH_PJ_STATIC})
-  message("Static link pjproject!")
-  # libpjproject: 使用本地 submodules/pjproject 中的静态库
-  if (PJDIR)
-    message("PJDIR was set explicitly: \"${PJDIR}\"")
-  else ()
-    if (DEFINED ENV{PJDIR})
-      set(PJDIR $ENV{PJDIR})
-      message("PJDIR was set from environment: \"${PJDIR}\"")
-    else ()
-      set(PJDIR ${CMAKE_CURRENT_LIST_DIR}/submodules/pjproject)
-      message("Use default PJDIR: \"${PJDIR}\"")
-    endif ()
-  endif()
-
-  # 参照其 configure 的 build.mak 文件
-  string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME_LOWERCASE)
-  string(TOLOWER ${CMAKE_SYSTEM_PROCESSOR} SYSTEM_PROCESSOR_LOWERCASE)
-  string(TOLOWER ${CMAKE_CXX_COMPILER_ID} CXX_COMPILER_ID_LOWERCASE)
-  # as: export TARGET_NAME := x86_64-unknown-linux-gnu
-  set(PJ_TARGET_NAME ${SYSTEM_PROCESSOR_LOWERCASE}-unknown-${SYSTEM_NAME_LOWERCASE}-${CXX_COMPILER_ID_LOWERCASE})
-  set(PJ_LIB_SUFFIX ${PJ_TARGET_NAME}.a)
-
-  set(PJ_CFLAGS
-    -DPJ_AUTOCONF=1
-    -DPJ_IS_BIG_ENDIAN=0
-    -DPJ_IS_LITTLE_ENDIAN=1
-  )
-
-  set(PJ_INCLUDE_DIRS
-    ${PJDIR}/pjlib/include
-    ${PJDIR}/pjlib-util/include
-    ${PJDIR}/pjnath/include
-    ${PJDIR}/pjmedia/include
-    ${PJDIR}/pjsip/include
-  )
-
-  set(PJ_LIB_FILES
-    ${PJDIR}/pjsip/lib/libpjsua2-${PJ_LIB_SUFFIX}
-    ${PJDIR}/pjsip/lib/libpjsua-${PJ_LIB_SUFFIX}
-    ${PJDIR}/pjsip/lib/libpjsip-ua-${PJ_LIB_SUFFIX}
-    ${PJDIR}/pjsip/lib/libpjsip-simple-${PJ_LIB_SUFFIX}
-    ${PJDIR}/pjsip/lib/libpjsip-${PJ_LIB_SUFFIX}
-    ${PJDIR}/pjmedia/lib/libpjmedia-codec-${PJ_LIB_SUFFIX}
-    ${PJDIR}/pjmedia/lib/libpjmedia-videodev-${PJ_LIB_SUFFIX}
-    ${PJDIR}/pjmedia/lib/libpjmedia-${PJ_LIB_SUFFIX}
-    ${PJDIR}/pjmedia/lib/libpjmedia-audiodev-${PJ_LIB_SUFFIX}
-    ${PJDIR}/pjnath/lib/libpjnath-${PJ_LIB_SUFFIX}
-    ${PJDIR}/pjlib-util/lib/libpjlib-util-${PJ_LIB_SUFFIX}
-    ${PJDIR}/pjlib/lib/libpj-${PJ_LIB_SUFFIX}
-  )
-
-  set(PJ_THIRD_PARTY_LIB_FILES
-    ${PJDIR}/third_party/lib/libsrtp-${PJ_LIB_SUFFIX}
-    ${PJDIR}/third_party/lib/libresample-${PJ_LIB_SUFFIX}
-    ${PJDIR}/third_party/lib/libgsmcodec-${PJ_LIB_SUFFIX}
-    ${PJDIR}/third_party/lib/libspeex-${PJ_LIB_SUFFIX}
-    ${PJDIR}/third_party/lib/libilbccodec-${PJ_LIB_SUFFIX}
-    ${PJDIR}/third_party/lib/libg7221codec-${PJ_LIB_SUFFIX}
-    # ${PJDIR}/third_party/lib/libyuv-${PJ_LIB_SUFFIX}
-    # ${PJDIR}/third_party/lib/libwebrtc-${PJ_LIB_SUFFIX}
-    # ${PJDIR}/third_party/lib/libwebrtc-aec3-${PJ_LIB_SUFFIX}
-  )
-
-  list(APPEND PJ_LIB_FILES ${PJ_THIRD_PARTY_LIB_FILES})
-  # list(APPEND PJ_LIB_FILES ssl crypto uuid m rt pthread)
-
-  target_compile_options(${PROJECT_NAME} PRIVATE ${PJ_CFLAGS})
-  target_include_directories(${PROJECT_NAME} PRIVATE ${PJ_INCLUDE_DIRS})
-  target_link_libraries(${PROJECT_NAME} ${PJ_LIB_FILES})
-
-  # pjproject Requires pthread
-  find_package(Threads REQUIRED)
-  target_link_libraries(${PROJECT_NAME} Threads::Threads)
-
-  # pjproject Requires UUID
-  pkg_check_modules(UUID REQUIRED uuid)
-  target_link_libraries(${PROJECT_NAME} ${UUID_LIBRARIES})
-  target_include_directories(${PROJECT_NAME} PRIVATE ${UUID_INCLUDE_DIRS})
-  target_compile_options(${PROJECT_NAME} PRIVATE ${UUID_CFLAGS})
-  target_link_directories(${PROJECT_NAME} PRIVATE ${UUID_LIBRARY_DIRS})
-  target_link_options(${PROJECT_NAME} PRIVATE ${UUID_LDFLAGS})
-
-  # openssl
-  if (${WITH_OPENSSL})
-    # openssl-libssl
-    pkg_check_modules(LIBSSL REQUIRED libssl)
-    target_link_libraries(${PROJECT_NAME} ${LIBSSL_LIBRARIES})
-    target_include_directories(${PROJECT_NAME} PRIVATE ${LIBSSL_INCLUDE_DIRS})
-    target_compile_options(${PROJECT_NAME} PRIVATE ${LIBSSL_CFLAGS})
-    target_link_directories(${PROJECT_NAME} PRIVATE ${LIBSSL_LIBRARY_DIRS})
-    target_link_options(${PROJECT_NAME} PRIVATE ${LIBSSL_LDFLAGS})
-    # openssl-libcrypto
-    pkg_check_modules(LIBCRYPTO REQUIRED libcrypto)
-    target_link_libraries(${PROJECT_NAME} ${LIBCRYPTO_LIBRARIES})
-    target_include_directories(${PROJECT_NAME} PRIVATE ${LIBCRYPTO_INCLUDE_DIRS})
-    target_compile_options(${PROJECT_NAME} PRIVATE ${LIBCRYPTO_CFLAGS})
-    target_link_directories(${PROJECT_NAME} PRIVATE ${LIBCRYPTO_LIBRARY_DIRS})
-    target_link_options(${PROJECT_NAME} PRIVATE ${LIBCRYPTO_LDFLAGS})
-  endif ()
-
-  # g729
-  message(STATUS "BCG729='${BCG729}'")
-  if ("${BCG729}" STREQUAL "subdir-shared")
-    add_subdirectory(${BCG729_DIR})
-    target_link_libraries(${PROJECT_NAME} bcg729)
-  elseif ("${BCG729}" STREQUAL "subdir-static")
-    add_subdirectory(${BCG729_DIR})
-    target_link_libraries(${PROJECT_NAME} bcg729-static)
-  elseif ("${BCG729}" STREQUAL "pkgcfg")
-    pkg_check_modules(LIBBCG729 REQUIRED libbcg729)
-    target_link_libraries(${PROJECT_NAME} ${LIBBCG729_LIBRARIES})
-    target_include_directories(${PROJECT_NAME} PRIVATE ${LIBBCG729_INCLUDE_DIRS})
-    target_compile_options(${PROJECT_NAME} PRIVATE ${LIBBCG729_CFLAGS})
-    target_link_directories(${PROJECT_NAME} PRIVATE ${LIBBCG729_LIBRARY_DIRS})
-    target_link_options(${PROJECT_NAME} PRIVATE ${LIBBCG729_LDFLAGS})
-  elseif("${BCG729}" STREQUAL "cmake-shared")
-    find_package(Bcg729 REQUIRED components bcg729)
-    target_link_libraries(${PROJECT_NAME} bcg729)
-  elseif("${BCG729}" STREQUAL "cmake-static")
-    find_package(Bcg729 REQUIRED components bcg729-static)
-    target_link_libraries(${PROJECT_NAME} bcg729-static)
-  else()
-    message(FATAL_ERROR "invalide `BCG729`: ${BCG729}")
-  endif()
-
-  # opus
-  if (${WITH_OPUS})
-    pkg_check_modules(OPUS REQUIRED opus)
-    target_link_libraries(${PROJECT_NAME} ${OPUS_LIBRARIES})
-    target_include_directories(${PROJECT_NAME} PRIVATE ${OPUS_INCLUDE_DIRS})
-    target_compile_options(${PROJECT_NAME} PRIVATE ${OPUS_CFLAGS})
-    target_link_directories(${PROJECT_NAME} PRIVATE ${OPUS_LIBRARY_DIRS})
-    target_link_options(${PROJECT_NAME} PRIVATE ${OPUS_LDFLAGS})
-  endif()
-
-else ()
-
-  # 动态链接 PJ，需要把它安装到操作系统，提供 pc
-  pkg_check_modules(LIBPJPROJECT REQUIRED libpjproject)
+pkg_check_modules(LIBPJPROJECT REQUIRED libpjproject)
+if (${PJPROJECT_SHARED})
   target_link_libraries(${PROJECT_NAME} ${LIBPJPROJECT_LIBRARIES})
-  target_include_directories(${PROJECT_NAME} PRIVATE ${LIBPJPROJECT_INCLUDE_DIRS})
-  target_compile_options(${PROJECT_NAME} PRIVATE ${LIBPJPROJECT_CFLAGS})
-  target_link_directories(${PROJECT_NAME} PRIVATE ${LIBPJPROJECT_LIBRARY_DIRS})
-  target_link_options(${PROJECT_NAME} PRIVATE ${LIBPJPROJECT_LDFLAGS})
+else()
+  target_link_libraries(${PROJECT_NAME} ${LIBPJPROJECT_STATIC_LIBRARIES})
 endif()
+target_include_directories(${PROJECT_NAME} PRIVATE ${LIBPJPROJECT_INCLUDE_DIRS})
+target_compile_options(${PROJECT_NAME} PRIVATE ${LIBPJPROJECT_CFLAGS})
+target_link_directories(${PROJECT_NAME} PRIVATE ${LIBPJPROJECT_LIBRARY_DIRS})
+target_link_options(${PROJECT_NAME} PRIVATE ${LIBPJPROJECT_LDFLAGS})
 
 # dependency of this project: libsamplerate
 pkg_check_modules(SAMPLERATE REQUIRED samplerate)
@@ -309,7 +170,11 @@ if (${CMAKE_FIND_GFLAGS})
   target_link_libraries(${PROJECT_NAME} gflags)
 else ()
   pkg_check_modules(GFLAGS REQUIRED gflags)
-  target_link_libraries(${PROJECT_NAME} ${GFLAGS_LIBRARIES})
+  if (${GFLAGS_SHARED})
+    target_link_libraries(${PROJECT_NAME} ${GFLAGS_LIBRARIES})
+  else()
+    target_link_libraries(${PROJECT_NAME} ${GFLAGS_STATIC_LIBRARIES})
+  endif()
   target_include_directories(${PROJECT_NAME} PRIVATE ${GFLAGS_INCLUDE_DIRS})
   target_compile_options(${PROJECT_NAME} PRIVATE ${GFLAGS_CFLAGS})
   target_link_directories(${PROJECT_NAME} PRIVATE ${GFLAGS_LIBRARY_DIRS})
@@ -322,7 +187,11 @@ if (${CMAKE_FIND_GLOG})
   target_link_libraries (${PROJECT_NAME} glog::glog)
 else ()
   pkg_check_modules(LIBGLOG REQUIRED libglog)
-  target_link_libraries(${PROJECT_NAME} ${LIBGLOG_LIBRARIES})
+  if (${GLOG_SHARED})
+    target_link_libraries(${PROJECT_NAME} ${LIBGLOG_LIBRARIES})
+  else()
+    target_link_libraries(${PROJECT_NAME} ${LIBGLOG_STATIC_LIBRARIES})
+  endif()
   target_include_directories(${PROJECT_NAME} PRIVATE ${LIBGLOG_INCLUDE_DIRS})
   target_compile_options(${PROJECT_NAME} PRIVATE ${LIBGLOG_CFLAGS})
   target_link_directories(${PROJECT_NAME} PRIVATE ${LIBGLOG_LIBRARY_DIRS})
