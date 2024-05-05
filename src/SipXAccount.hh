@@ -9,8 +9,10 @@ namespace sipxsua {
 class SipXAccount : public pj::Account {
 public:
   ~SipXAccount();
+  /**
   virtual void onRegState(pj::OnRegStateParam &) override;
   virtual void onIncomingCall(pj::OnIncomingCallParam &) override;
+  */
 };
 
 } // namespace sipxsua

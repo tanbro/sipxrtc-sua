@@ -8,10 +8,9 @@ namespace sipxsua {
 
 using namespace std;
 
-SipXAccount::~SipXAccount() {
-  shutdown();
-}
+SipXAccount::~SipXAccount() { shutdown(); }
 
+/**
 void SipXAccount::onRegState(pj::OnRegStateParam &prm) {
   auto ai = getInfo();
   LOG(INFO) << "[" << getId() << "] onRegState" << endl
@@ -36,5 +35,6 @@ void SipXAccount::onIncomingCall(pj::OnIncomingCallParam &iprm) {
 
   call->hangup(prm);
 }
+*/
 
 } // namespace sipxsua
