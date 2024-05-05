@@ -14,9 +14,8 @@ namespace sipxsua {
 using namespace std;
 using namespace pj;
 
-SipXCall::SipXCall(Account &acc, int call_id) : Call(acc, call_id) {
+SipXCall::SipXCall(Account &acc) : Call(acc, PJSUA_INVALID_ID) {
   LOG(INFO) << "ctor " << getId();
-  _isIncoming = call_id != PJSUA_INVALID_ID;
 }
 
 SipXCall::~SipXCall() {
@@ -24,40 +23,14 @@ SipXCall::~SipXCall() {
   destroyPlayerAndRecorder();
 }
 
-mutex SipXCall::instancesMutex;
-set<shared_ptr<SipXCall>> SipXCall::instances;
+std::unique_ptr<SipXCall> SipXCall::instance = nullptr;
 
-shared_ptr<SipXCall> SipXCall::createCall(pj::Account &acc, int callId) {
-  auto call = make_shared<SipXCall>(acc, callId);
-  {
-    lock_guard<mutex> lk(instancesMutex);
-    auto result = instances.insert(call);
-    CHECK(result.second) << ": insertion for calls set not took place";
-
-    VLOG(1) << "call [" << call->getId()
-            << "] created. instances.size():" << instances.size();
+void SipXCall::createCall(pj::Account &acc) {
+  if (instance == nullptr) {
+    instance = make_unique<SipXCall>(acc);
+  } else {
+    throw runtime_error("SipXCall instance exsited already.");
   }
-  return call;
-}
-
-bool SipXCall::internalReleaseCall(SipXCall *p) {
-  lock_guard<mutex> lk(instancesMutex);
-  auto cid = p->getId();
-  auto found = instances.end();
-  for (auto it = instances.begin(); it != instances.end(); ++it) {
-    if (p == (SipXCall *)it->get()) {
-      found = it;
-      break;
-    }
-  }
-  if (found == instances.end()) {
-    LOG(ERROR) << "Call [" << cid << "] not in instances set";
-  }
-  instances.erase(found);
-  VLOG(1) << "call [" << cid
-          << "] released. instances.size():" << instances.size();
-
-  return true;
 }
 
 void SipXCall::onCallState(OnCallStateParam &prm) {
@@ -92,12 +65,9 @@ void SipXCall::onCallState(OnCallStateParam &prm) {
 
   if (ci.state == PJSIP_INV_STATE_DISCONNECTED) {
     /// ATTENTION: Schedule/Dispatch call deletion to another thread here
-    /// `theCall` 是全局的 shared_ptr，不会自动释放！
-    internalReleaseCall(this);
-    if (this == theCall.get()) {
-      LOG(WARNING) << "DISCONNECTED";
-      interrupted = true;
-    }
+    /// 设置全局标记，让主线程退出，在退出时释放这个对象。
+    LOG(WARNING) << "DISCONNECTED";
+    interrupted = true;
   }
 }
 
@@ -162,53 +132,6 @@ void SipXCall::destroyPlayerAndRecorder() {
     delete writer;
     writer = nullptr;
   }
-}
-
-bool SipXCall::isIncoming() { return _isIncoming; }
-
-AudioMediaUdsReader *SipXCall::getReader() { return reader; }
-
-AudioMediaUdsWriter *SipXCall::getWriter() { return writer; }
-
-set<int> SipXCall::getAllFds() {
-  set<int> result;
-  {
-    lock_guard<mutex> lk(instancesMutex);
-    for (auto it = instances.begin(); it != instances.end(); ++it) {
-      auto call = *it;
-      if (call->reader) {
-        result.insert(call->reader->getFd());
-      }
-      if (call->writer) {
-        result.insert(call->writer->getFd());
-      }
-    }
-  }
-  return result;
-}
-
-AudioMediaUdsReader *SipXCall::findReader(int fd) {
-  for (auto it = instances.begin(); it != instances.end(); ++it) {
-    auto call = *it;
-    if (call->reader) {
-      if (fd == call->reader->getFd()) {
-        return call->reader;
-      }
-    }
-  }
-  return NULL;
-}
-
-AudioMediaUdsWriter *SipXCall::findWriter(int fd) {
-  for (auto it = instances.begin(); it != instances.end(); ++it) {
-    auto call = *it;
-    if (call->writer) {
-      if (fd == call->writer->getFd()) {
-        return call->writer;
-      }
-    }
-  }
-  return NULL;
 }
 
 } // namespace sipxsua

@@ -18,51 +18,21 @@ private:
   bool _isIncoming;
 
 public:
-  SipXCall(pj::Account &acc, int callId = PJSUA_INVALID_ID);
+  SipXCall(pj::Account &acc);
   ~SipXCall();
 
-  static std::shared_ptr<SipXCall> createCall(pj::Account &acc,
-                                              int callId = PJSUA_INVALID_ID);
+  static std::unique_ptr<SipXCall> instance;
+
+  static void createCall(pj::Account &acc);
 
   virtual void onCallState(pj::OnCallStateParam &) override;
   virtual void onCallMediaState(pj::OnCallMediaStateParam &) override;
 
-  AudioMediaUdsReader *getReader();
-  AudioMediaUdsWriter *getWriter();
-
-  bool isIncoming();
-
-  static std::set<int> getAllFds();
-  static std::mutex instancesMutex;
-  static std::set<std::shared_ptr<SipXCall>> instances;
-
-  /**
-   * @brief
-   *
-   * 注意 calls set 的线程安全问题。
-   *
-   * 应在 callMutex 保护下调用这个方法。
-   *
-   * @param fd
-   * @return AudioMediaUdsReader*
-   */
-  static AudioMediaUdsReader *findReader(int fd);
-
-  /**
-   * @brief
-   *
-   * 注意 calls set 的线程安全问题。
-   *
-   * 应在 callMutex 保护下调用这个方法。
-   *
-   * @param fd
-   * @return AudioMediaUdsWriter*
-   */
-  static AudioMediaUdsWriter *findWriter(int fd);
+  AudioMediaUdsReader *getReader() { return reader; };
+  AudioMediaUdsWriter *getWriter() { return writer; };
 
 private:
   void destroyPlayerAndRecorder();
-  static bool internalReleaseCall(SipXCall *p);
 
   pj_caching_pool cachingPool;
   pj_pool_t *pool;

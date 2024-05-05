@@ -17,26 +17,23 @@ using TClock = chrono::high_resolution_clock;
 using TDuration = chrono::duration<float, milli>;
 
 int Poller::refillFds() {
-  lock_guard<mutex> lk(SipXCall::instancesMutex);
+  CHECK_NE(nullptr, SipXCall::instance);
+
   memset(fds, 0, sizeof(fds));
   nfds = 0;
   int i = 0;
   short events = POLLIN;
-  auto iterable = SipXCall::instances;
-  for (auto it = iterable.begin(); it != iterable.end(); ++it) {
-    auto call = *it;
-    auto reader = call->getReader();
-    if (reader) {
-      int fd = reader->getFd();
-      if (fd >= 0) {
-        fds[i].fd = fd;
-        fds[i].events = events;
-        ++i;
-      }
-    }
+
+  auto reader = SipXCall::instance->getReader();
+  if (reader) {
+    auto fd = reader->getFd();
+    CHECK_NE(0, fd);
+    fds[0].fd = fd;
+    fds[0].events = events;
+    nfds += 1;
   }
-  nfds = i;
-  return i;
+
+  return nfds;
 }
 
 void Poller::runUntil(int timeout, int interval, function<bool()> const &pred) {
@@ -68,8 +65,7 @@ void Poller::runUntil(int timeout, int interval, function<bool()> const &pred) {
             LOG(WARNING) << "POLLNVAL";
           }
           if (pfd.revents & POLLIN) {
-            lock_guard<mutex> lk(SipXCall::instancesMutex);
-            auto reader = SipXCall::findReader(pfd.fd);
+            auto reader = SipXCall::instance->getReader();
             if (reader) {
               if (reader->getFd()) {
                 reader->read();

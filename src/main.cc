@@ -169,10 +169,10 @@ int main(int argc, char *argv[]) {
   CHECK_EQ(0, aud_dev_mgr.getDevCount());
 
   LOG(INFO) << "Call " << FLAGS_dst_uri << " ...";
-  theCall = SipXCall::createCall(account);
+  SipXCall::createCall(account);
   try {
     pj::CallOpParam cop(true); // Use default call settings
-    theCall->makeCall(FLAGS_dst_uri, cop);
+    SipXCall::instance->makeCall(FLAGS_dst_uri, cop);
   } catch (pj::Error &err) {
     LOG(FATAL) << "failed on makeCall(\"" << FLAGS_dst_uri << "\")"
                << " " << err.status << ": " << err.reason << endl
@@ -186,7 +186,7 @@ int main(int argc, char *argv[]) {
 
   LOG(INFO) << "Start polling";
   Poller poller;
-  time_t begin = time(NULL);
+  auto begin = time(NULL);
   poller.runUntil(1000, 1000, [&begin]() {
     return (!interrupted && (time(NULL) - begin < FLAGS_max_alive));
   });
@@ -194,9 +194,9 @@ int main(int argc, char *argv[]) {
   LOG(WARNING) << "Hangup all calls";
   ep->hangupAllCalls();
   // theCall 要显式的删除！防止 Call 在 PJ Lib 之后释放，引起的崩溃
-  if (theCall) {
-    theCall = nullptr;
-  }
+  SipXCall::instance.reset();
+
+  // 释放 PJ SUA2 的 library
   ep->libDestroy();
   delete ep;
 
