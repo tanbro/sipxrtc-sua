@@ -14,8 +14,6 @@
 namespace sipxsua {
 
 class SipXCall : public pj::Call {
-private:
-  bool _isIncoming;
 
 public:
   SipXCall(pj::Account &acc);
@@ -23,7 +21,7 @@ public:
 
   static std::unique_ptr<SipXCall> instance;
 
-  static void createCall(pj::Account &acc);
+  static void create(pj::Account &acc);
 
   virtual void onCallState(pj::OnCallStateParam &) override;
   virtual void onCallMediaState(pj::OnCallMediaStateParam &) override;

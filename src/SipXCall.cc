@@ -23,14 +23,14 @@ SipXCall::~SipXCall() {
   destroyPlayerAndRecorder();
 }
 
-std::unique_ptr<SipXCall> SipXCall::instance = nullptr;
+unique_ptr<SipXCall> SipXCall::instance = nullptr;
 
-void SipXCall::createCall(pj::Account &acc) {
+void SipXCall::create(pj::Account &acc) {
   if (instance == nullptr) {
     instance = make_unique<SipXCall>(acc);
-  } else {
-    throw runtime_error("SipXCall instance exsited already.");
+    return;
   }
+  throw runtime_error("SipXCall instance exsited already.");
 }
 
 void SipXCall::onCallState(OnCallStateParam &prm) {

@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
   CHECK_EQ(0, aud_dev_mgr.getDevCount());
 
   LOG(INFO) << "Call " << FLAGS_dst_uri << " ...";
-  SipXCall::createCall(account);
+  SipXCall::create(account);
   try {
     pj::CallOpParam cop(true); // Use default call settings
     SipXCall::instance->makeCall(FLAGS_dst_uri, cop);
@@ -194,7 +194,7 @@ int main(int argc, char *argv[]) {
   LOG(WARNING) << "Hangup all calls";
   ep->hangupAllCalls();
   // theCall 要显式的删除！防止 Call 在 PJ Lib 之后释放，引起的崩溃
-  SipXCall::instance.reset();
+  SipXCall::instance = nullptr;
 
   // 释放 PJ SUA2 的 library
   ep->libDestroy();
