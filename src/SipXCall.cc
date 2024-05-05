@@ -9,10 +9,10 @@
 #include "SipXAccount.hh"
 #include "global.hh"
 
+namespace sipxsua {
+
 using namespace std;
 using namespace pj;
-
-namespace sipxsua {
 
 SipXCall::SipXCall(Account &acc, int call_id) : Call(acc, call_id) {
   LOG(INFO) << "ctor " << getId();

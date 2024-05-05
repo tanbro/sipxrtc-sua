@@ -9,9 +9,9 @@
 
 #include "SipXCall.hh"
 
-using namespace std;
-
 namespace sipxsua {
+
+using namespace std;
 
 using TClock = chrono::high_resolution_clock;
 using TDuration = chrono::duration<float, milli>;

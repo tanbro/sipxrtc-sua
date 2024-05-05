@@ -4,9 +4,9 @@
 
 #include "SipXCall.hh"
 
-using namespace std;
-
 namespace sipxsua {
+
+using namespace std;
 
 SipXAccount::~SipXAccount() {
   shutdown();

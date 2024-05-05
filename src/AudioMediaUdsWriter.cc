@@ -4,12 +4,12 @@
 
 #include <glog/logging.h>
 
-using namespace std;
-using namespace pj;
-
 #define THIS_FILE "AudioMediaUdsWriter.cc"
 
 namespace sipxsua {
+
+using namespace std;
+using namespace pj;
 
 using TClock = chrono::high_resolution_clock;
 using TDuration = chrono::duration<float, micro>;
@@ -61,7 +61,7 @@ void AudioMediaUdsWriter::createRecorder(
                                    audioFormat.channelCount *
                                    audioFormat.frameTimeUsec / 1000000;
 
-  //分配缓冲区
+  // 分配缓冲区
   capture_buffer =
       (uint8_t *)pj_pool_calloc(pool, buffer_size, sizeof(uint8_t));
 

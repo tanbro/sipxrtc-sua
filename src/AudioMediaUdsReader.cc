@@ -14,10 +14,10 @@
 
 #define THIS_FILE "AudioMediaUdsReader.cxx"
 
+namespace sipxsua {
+
 using namespace std;
 using namespace pj;
-
-namespace sipxsua {
 
 using TClock = chrono::high_resolution_clock;
 using TDuration = chrono::duration<float, micro>;

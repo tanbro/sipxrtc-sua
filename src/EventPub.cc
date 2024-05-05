@@ -9,9 +9,9 @@
 
 #include <glog/logging.h>
 
-using namespace std;
-
 namespace sipxsua {
+
+using namespace std;
 
 static const string trimStr(const std::string &s);
 

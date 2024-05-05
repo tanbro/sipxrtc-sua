@@ -8,9 +8,9 @@
 
 #include <glog/logging.h>
 
-using namespace std;
-
 namespace sipxsua {
+
+using namespace std;
 
 UdsReader::UdsReader(const std::string &path) : path(path) {
   memset(&addr, 0, sizeof(addr));
